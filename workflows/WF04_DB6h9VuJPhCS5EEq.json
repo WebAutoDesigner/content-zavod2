@@ -1,0 +1,589 @@
+{
+  "id": "DB6h9VuJPhCS5EEq",
+  "name": "рџЋ¬ 04 | РџСЂРѕРёР·РІРѕРґСЃС‚РІРѕ вЂ” РІСЃРµ С„РѕСЂРјР°С‚С‹",
+  "active": true,
+  "isArchived": false,
+  "nodes": [
+    {
+      "id": "trigger-04",
+      "name": "рџ“Ё Trigger РѕС‚ 03.5",
+      "type": "n8n-nodes-base.executeWorkflowTrigger",
+      "position": [
+        208,
+        304
+      ],
+      "disabled": false
+    },
+    {
+      "id": "prep-04",
+      "name": "вљ™пёЏ Code: РїРѕРґРіРѕС‚РѕРІРёС‚СЊ РґР°РЅРЅС‹Рµ",
+      "type": "n8n-nodes-base.code",
+      "position": [
+        752,
+        304
+      ],
+      "disabled": false
+    },
+    {
+      "id": "gpt4o-04",
+      "name": "рџ§  GPT-4o: РіРµРЅРµСЂР°С†РёСЏ С‚РµРєСЃС‚Р°",
+      "type": "n8n-nodes-base.httpRequest",
+      "position": [
+        1008,
+        304
+      ],
+      "disabled": false
+    },
+    {
+      "id": "parse-gpt-04",
+      "name": "рџ“Љ Code: СЂР°СЃРїР°СЂСЃРёС‚СЊ GPT РѕС‚РІРµС‚",
+      "type": "n8n-nodes-base.code",
+      "position": [
+        1264,
+        304
+      ],
+      "disabled": false
+    },
+    {
+      "id": "jamendo-04",
+      "name": "рџЋµ Jamendo API: С‚СЂРµРє РїРѕ T5",
+      "type": "n8n-nodes-base.httpRequest",
+      "position": [
+        1504,
+        304
+      ],
+      "disabled": false
+    },
+    {
+      "id": "jamendo-parse-04",
+      "name": "вљ™пёЏ Code: РѕР±СЂР°Р±РѕС‚Р°С‚СЊ Jamendo",
+      "type": "n8n-nodes-base.code",
+      "position": [
+        1760,
+        304
+      ],
+      "disabled": false
+    },
+    {
+      "id": "switch-04",
+      "name": "рџ”Ђ Switch: С„РѕСЂРјР°С‚ C / B / A / D",
+      "type": "n8n-nodes-base.switch",
+      "position": [
+        2000,
+        304
+      ],
+      "disabled": false
+    },
+    {
+      "id": "format-c-04",
+      "name": "рџЋ¬ C: FFmpeg typewriter",
+      "type": "n8n-nodes-base.httpRequest",
+      "position": [
+        2256,
+        112
+      ],
+      "disabled": false
+    },
+    {
+      "id": "gemini-b-04",
+      "name": "рџ¤– B1: Gemini Flash",
+      "type": "n8n-nodes-base.httpRequest",
+      "position": [
+        2256,
+        256
+      ],
+      "disabled": false
+    },
+    {
+      "id": "format-a-04",
+      "name": "рџ“Љ A: FFmpeg РєР°СЂС‚РѕС‡РєР° СЂРµР·СѓР»СЊС‚Р°С‚Р°",
+      "type": "n8n-nodes-base.httpRequest",
+      "position": [
+        2256,
+        400
+      ],
+      "disabled": false
+    },
+    {
+      "id": "format-d-04",
+      "name": "рџ¤– D1: GPT voiceover СЃРєСЂРёРїС‚",
+      "type": "n8n-nodes-base.httpRequest",
+      "position": [
+        2256,
+        560
+      ],
+      "disabled": false
+    },
+    {
+      "id": "merge-04",
+      "name": "рџ”— Merge: РѕР±СЉРµРґРёРЅРёС‚СЊ СЂРµР·СѓР»СЊС‚Р°С‚С‹",
+      "type": "n8n-nodes-base.merge",
+      "position": [
+        2560,
+        304
+      ],
+      "disabled": false
+    },
+    {
+      "id": "qc-04",
+      "name": "вњ… QC: РїСЂРѕРІРµСЂРєР° С„Р°Р№Р»Р°",
+      "type": "n8n-nodes-base.code",
+      "position": [
+        2800,
+        304
+      ],
+      "disabled": false
+    },
+    {
+      "id": "moderation-04",
+      "name": "рџ›Ў Gemini Moderation",
+      "type": "n8n-nodes-base.httpRequest",
+      "position": [
+        3056,
+        304
+      ],
+      "disabled": false
+    },
+    {
+      "id": "moderation-parse-04",
+      "name": "рџ”Ќ Code: РїСЂРѕРІРµСЂРєР° РјРѕРґРµСЂР°С†РёРё",
+      "type": "n8n-nodes-base.code",
+      "position": [
+        3312,
+        304
+      ],
+      "disabled": false
+    },
+    {
+      "id": "save-04",
+      "name": "рџ’ѕ Supabase T2: СЃС‚Р°С‚СѓСЃ ready",
+      "type": "n8n-nodes-base.httpRequest",
+      "position": [
+        3552,
+        304
+      ],
+      "disabled": false
+    },
+    {
+      "id": "b2-parse-04",
+      "name": "рџ“Љ B2: Code parse Gemini",
+      "type": "n8n-nodes-base.code",
+      "position": [
+        2560,
+        144
+      ],
+      "disabled": false
+    },
+    {
+      "id": "b3-gpt-04",
+      "name": "рџ§  B3: GPT-4o С„РёРЅР°Р» РґРёР°Р»РѕРі",
+      "type": "n8n-nodes-base.httpRequest",
+      "position": [
+        2800,
+        144
+      ],
+      "disabled": false
+    },
+    {
+      "id": "b4-parse-04",
+      "name": "рџ“Љ B4: Code parse GPT-B",
+      "type": "n8n-nodes-base.code",
+      "position": [
+        3040,
+        144
+      ],
+      "disabled": false
+    },
+    {
+      "id": "b5-playwright-04",
+      "name": "рџЋ® B5: Playwright render_chat",
+      "type": "n8n-nodes-base.httpRequest",
+      "position": [
+        3296,
+        160
+      ],
+      "disabled": false
+    },
+    {
+      "id": "b6-hook-04",
+      "name": "рџЋµ B6: add hook + music",
+      "type": "n8n-nodes-base.httpRequest",
+      "position": [
+        3552,
+        160
+      ],
+      "disabled": false
+    },
+    {
+      "id": "wh-04",
+      "name": "рџ”— Webhook: СЂСѓС‡РЅРѕР№ С‚РµСЃС‚",
+      "type": "n8n-nodes-base.webhook",
+      "position": [
+        208,
+        496
+      ],
+      "disabled": false
+    },
+    {
+      "id": "d2-tts-04",
+      "name": "рџЋ™ D2: OpenAI TTS Р°СѓРґРёРѕ",
+      "type": "n8n-nodes-base.httpRequest",
+      "position": [
+        2560,
+        560
+      ],
+      "disabled": false
+    },
+    {
+      "id": "d3-save-04",
+      "name": "рџ’ѕ D3: РЎРѕС…СЂР°РЅРёС‚СЊ Р°СѓРґРёРѕ",
+      "type": "n8n-nodes-base.code",
+      "position": [
+        2800,
+        560
+      ],
+      "disabled": false
+    },
+    {
+      "id": "replicate-d4",
+      "name": "рџЋ¬ D4: Replicate РІРёРґРµРѕ",
+      "type": "n8n-nodes-base.httpRequest",
+      "position": [
+        2608,
+        816
+      ],
+      "disabled": false
+    },
+    {
+      "id": "d4-parse",
+      "name": "рџ“Љ D4: РѕР±СЂР°Р±РѕС‚Р°С‚СЊ РІРёРґРµРѕ",
+      "type": "n8n-nodes-base.code",
+      "position": [
+        2832,
+        800
+      ],
+      "disabled": false
+    },
+    {
+      "id": "normalize-04",
+      "name": "вљ™пёЏ Normalize: РґР°РЅРЅС‹Рµ РІС…РѕРґР°",
+      "type": "n8n-nodes-base.code",
+      "position": [
+        480,
+        304
+      ],
+      "disabled": false
+    }
+  ],
+  "connections": {
+    "рџ“Љ Code: СЂР°СЃРїР°СЂСЃРёС‚СЊ GPT РѕС‚РІРµС‚": {
+      "main": [
+        [
+          {
+            "index": 0,
+            "node": "рџЋµ Jamendo API: С‚СЂРµРє РїРѕ T5",
+            "type": "main"
+          }
+        ]
+      ]
+    },
+    "вљ™пёЏ Code: РїРѕРґРіРѕС‚РѕРІРёС‚СЊ РґР°РЅРЅС‹Рµ": {
+      "main": [
+        [
+          {
+            "index": 0,
+            "node": "рџ§  GPT-4o: РіРµРЅРµСЂР°С†РёСЏ С‚РµРєСЃС‚Р°",
+            "type": "main"
+          }
+        ]
+      ]
+    },
+    "рџ§  GPT-4o: РіРµРЅРµСЂР°С†РёСЏ С‚РµРєСЃС‚Р°": {
+      "main": [
+        [
+          {
+            "index": 0,
+            "node": "рџ“Љ Code: СЂР°СЃРїР°СЂСЃРёС‚СЊ GPT РѕС‚РІРµС‚",
+            "type": "main"
+          }
+        ]
+      ]
+    },
+    "рџ”Ђ Switch: С„РѕСЂРјР°С‚ C / B / A / D": {
+      "main": [
+        [
+          {
+            "index": 0,
+            "node": "рџЋ¬ C: FFmpeg typewriter",
+            "type": "main"
+          }
+        ],
+        [
+          {
+            "index": 0,
+            "node": "рџ¤– B1: Gemini Flash",
+            "type": "main"
+          }
+        ],
+        [
+          {
+            "node": "рџ“Љ A: FFmpeg РєР°СЂС‚РѕС‡РєР° СЂРµР·СѓР»СЊС‚Р°С‚Р°",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "рџ¤– D1: GPT voiceover СЃРєСЂРёРїС‚",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "рџЋµ Jamendo API: С‚СЂРµРє РїРѕ T5": {
+      "main": [
+        [
+          {
+            "index": 0,
+            "node": "вљ™пёЏ Code: РѕР±СЂР°Р±РѕС‚Р°С‚СЊ Jamendo",
+            "type": "main"
+          }
+        ]
+      ]
+    },
+    "вљ™пёЏ Code: РѕР±СЂР°Р±РѕС‚Р°С‚СЊ Jamendo": {
+      "main": [
+        [
+          {
+            "index": 0,
+            "node": "рџ”Ђ Switch: С„РѕСЂРјР°С‚ C / B / A / D",
+            "type": "main"
+          }
+        ]
+      ]
+    },
+    "рџ“Љ A: FFmpeg РєР°СЂС‚РѕС‡РєР° СЂРµР·СѓР»СЊС‚Р°С‚Р°": {
+      "main": [
+        [
+          {
+            "node": "рџ”— Merge: РѕР±СЉРµРґРёРЅРёС‚СЊ СЂРµР·СѓР»СЊС‚Р°С‚С‹",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "рџ¤– D1: GPT voiceover СЃРєСЂРёРїС‚": {
+      "main": [
+        [
+          {
+            "node": "рџЋ™ D2: OpenAI TTS Р°СѓРґРёРѕ",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "рџ”— Merge: РѕР±СЉРµРґРёРЅРёС‚СЊ СЂРµР·СѓР»СЊС‚Р°С‚С‹": {
+      "main": [
+        [
+          {
+            "node": "вњ… QC: РїСЂРѕРІРµСЂРєР° С„Р°Р№Р»Р°",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "вњ… QC: РїСЂРѕРІРµСЂРєР° С„Р°Р№Р»Р°": {
+      "main": [
+        [
+          {
+            "node": "рџ›Ў Gemini Moderation",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "рџ›Ў Gemini Moderation": {
+      "main": [
+        [
+          {
+            "node": "рџ”Ќ Code: РїСЂРѕРІРµСЂРєР° РјРѕРґРµСЂР°С†РёРё",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "рџ”Ќ Code: РїСЂРѕРІРµСЂРєР° РјРѕРґРµСЂР°С†РёРё": {
+      "main": [
+        [
+          {
+            "node": "рџ’ѕ Supabase T2: СЃС‚Р°С‚СѓСЃ ready",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "рџ“Љ B2: Code parse Gemini": {
+      "main": [
+        [
+          {
+            "node": "рџ§  B3: GPT-4o С„РёРЅР°Р» РґРёР°Р»РѕРі",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "рџ§  B3: GPT-4o С„РёРЅР°Р» РґРёР°Р»РѕРі": {
+      "main": [
+        [
+          {
+            "node": "рџ“Љ B4: Code parse GPT-B",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "рџ“Љ B4: Code parse GPT-B": {
+      "main": [
+        [
+          {
+            "node": "рџЋ® B5: Playwright render_chat",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "рџЋ® B5: Playwright render_chat": {
+      "main": [
+        [
+          {
+            "node": "рџЋµ B6: add hook + music",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "рџЋµ B6: add hook + music": {
+      "main": [
+        [
+          {
+            "node": "рџ”— Merge: РѕР±СЉРµРґРёРЅРёС‚СЊ СЂРµР·СѓР»СЊС‚Р°С‚С‹",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "рџЋ™ D2: OpenAI TTS Р°СѓРґРёРѕ": {
+      "main": [
+        [
+          {
+            "node": "рџ’ѕ D3: РЎРѕС…СЂР°РЅРёС‚СЊ Р°СѓРґРёРѕ",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "рџ’ѕ D3: РЎРѕС…СЂР°РЅРёС‚СЊ Р°СѓРґРёРѕ": {
+      "main": [
+        [
+          {
+            "node": "рџЋ¬ D4: Replicate РІРёРґРµРѕ",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "рџЋ¬ D4: Replicate РІРёРґРµРѕ": {
+      "main": [
+        [
+          {
+            "node": "рџ“Љ D4: РѕР±СЂР°Р±РѕС‚Р°С‚СЊ РІРёРґРµРѕ",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "рџ“Љ D4: РѕР±СЂР°Р±РѕС‚Р°С‚СЊ РІРёРґРµРѕ": {
+      "main": [
+        [
+          {
+            "node": "рџ”— Merge: РѕР±СЉРµРґРёРЅРёС‚СЊ СЂРµР·СѓР»СЊС‚Р°С‚С‹",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "рџЋ¬ C: FFmpeg typewriter": {
+      "main": [
+        [
+          {
+            "node": "рџ”— Merge: РѕР±СЉРµРґРёРЅРёС‚СЊ СЂРµР·СѓР»СЊС‚Р°С‚С‹",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "рџ¤– B1: Gemini Flash": {
+      "main": [
+        [
+          {
+            "node": "рџ“Љ B2: Code parse Gemini",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "рџ“Ё Trigger РѕС‚ 03.5": {
+      "main": [
+        [
+          {
+            "node": "вљ™пёЏ Normalize: РґР°РЅРЅС‹Рµ РІС…РѕРґР°",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "рџ”— Webhook: СЂСѓС‡РЅРѕР№ С‚РµСЃС‚": {
+      "main": [
+        [
+          {
+            "node": "вљ™пёЏ Normalize: РґР°РЅРЅС‹Рµ РІС…РѕРґР°",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "вљ™пёЏ Normalize: РґР°РЅРЅС‹Рµ РІС…РѕРґР°": {
+      "main": [
+        [
+          {
+            "node": "вљ™пёЏ Code: РїРѕРґРіРѕС‚РѕРІРёС‚СЊ РґР°РЅРЅС‹Рµ",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "nodeCount": 27,
+  "connectionCount": 26
+}

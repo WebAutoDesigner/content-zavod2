@@ -1,0 +1,683 @@
+{
+    "name":  "02 | Pattern Extraction",
+    "active":  false,
+    "isArchived":  false,
+    "nodes":  [
+                  {
+                      "id":  "schedule-02",
+                      "name":  "Schedule: extract next pattern",
+                      "type":  "n8n-nodes-base.scheduleTrigger",
+                      "typeVersion":  1.2,
+                      "position":  [
+                                       0,
+                                       180
+                                   ],
+                      "parameters":  {
+                                         "rule":  {
+                                                      "interval":  [
+                                                                       {
+                                                                           "field":  "cronExpression",
+                                                                           "expression":  "*/20 * * * *"
+                                                                       }
+                                                                   ]
+                                                  }
+                                     }
+                  },
+                  {
+                      "id":  "manual-webhook-02",
+                      "name":  "Webhook: manual WF02",
+                      "type":  "n8n-nodes-base.webhook",
+                      "typeVersion":  2,
+                      "position":  [
+                                       0,
+                                       380
+                                   ],
+                      "parameters":  {
+                                         "path":  "wf02-pattern-extraction",
+                                         "httpMethod":  "POST",
+                                         "responseMode":  "lastNode"
+                                     }
+                  },
+                  {
+                      "id":  "read-video-02",
+                      "name":  "Supabase: read ready video",
+                      "type":  "n8n-nodes-base.httpRequest",
+                      "typeVersion":  4.4,
+                      "alwaysOutputData":  true,
+                      "position":  [
+                                       300,
+                                       280
+                                   ],
+                      "parameters":  {
+                                         "url":  "https://xxnzqridvepixzireqjh.supabase.co/rest/v1/competitor_videos?select=*\u0026status=eq.ready_for_pattern\u0026order=selection_score.desc\u0026limit=1",
+                                         "method":  "GET",
+                                         "sendHeaders":  true,
+                                         "headerParameters":  {
+                                                                  "parameters":  [
+                                                                                     {
+                                                                                         "name":  "apikey",
+                                                                                         "value":  "SUPABASE_SECRET_KEY"
+                                                                                     },
+                                                                                     {
+                                                                                         "name":  "Authorization",
+                                                                                         "value":  "Bearer SUPABASE_SECRET_KEY"
+                                                                                     },
+                                                                                     {
+                                                                                         "name":  "Content-Type",
+                                                                                         "value":  "application/json"
+                                                                                     }
+                                                                                 ]
+                                                              }
+                                     }
+                  },
+                  {
+                      "id":  "normalize-video-02",
+                      "name":  "Code: normalize ready video",
+                      "type":  "n8n-nodes-base.code",
+                      "typeVersion":  2,
+                      "position":  [
+                                       580,
+                                       280
+                                   ],
+                      "parameters":  {
+                                         "mode":  "runOnceForAllItems",
+                                         "jsCode":  "const first = $input.first()?.json;\nconst video = Array.isArray(first) ? first[0] : first;\n\nif (!video || !video.id) {\n  return [{ json: { has_video: false, action: \u0027no_ready_video\u0027, message: \u0027No competitor videos with status=ready_for_pattern.\u0027 } }];\n}\n\nreturn [{ json: { has_video: true, video } }];"
+                                     }
+                  },
+                  {
+                      "id":  "if-video-02",
+                      "name":  "IF: has ready video?",
+                      "type":  "n8n-nodes-base.if",
+                      "typeVersion":  2.3,
+                      "position":  [
+                                       860,
+                                       280
+                                   ],
+                      "parameters":  {
+                                         "conditions":  {
+                                                            "combinator":  "and",
+                                                            "options":  {
+                                                                            "caseSensitive":  true,
+                                                                            "leftValue":  "",
+                                                                            "typeValidation":  "strict",
+                                                                            "version":  2
+                                                                        },
+                                                            "conditions":  [
+                                                                               {
+                                                                                   "id":  "has-video",
+                                                                                   "leftValue":  "={{ $json.has_video }}",
+                                                                                   "operator":  {
+                                                                                                    "type":  "boolean",
+                                                                                                    "operation":  "true",
+                                                                                                    "singleValue":  true
+                                                                                                }
+                                                                               }
+                                                                           ]
+                                                        }
+                                     }
+                  },
+                  {
+                      "id":  "read-analysis-02",
+                      "name":  "Supabase: read video analysis",
+                      "type":  "n8n-nodes-base.httpRequest",
+                      "typeVersion":  4.4,
+                      "alwaysOutputData":  true,
+                      "position":  [
+                                       1140,
+                                       140
+                                   ],
+                      "parameters":  {
+                                         "url":  "={{ \u0027https://xxnzqridvepixzireqjh.supabase.co/rest/v1/competitor_video_analysis?select=*\u0026competitor_video_id=eq.\u0027 + $json.video.id + \u0027\u0026status=eq.ready_for_pattern\u0026order=created_at.desc\u0026limit=1\u0027 }}",
+                                         "method":  "GET",
+                                         "sendHeaders":  true,
+                                         "headerParameters":  {
+                                                                  "parameters":  [
+                                                                                     {
+                                                                                         "name":  "apikey",
+                                                                                         "value":  "SUPABASE_SECRET_KEY"
+                                                                                     },
+                                                                                     {
+                                                                                         "name":  "Authorization",
+                                                                                         "value":  "Bearer SUPABASE_SECRET_KEY"
+                                                                                     },
+                                                                                     {
+                                                                                         "name":  "Content-Type",
+                                                                                         "value":  "application/json"
+                                                                                     }
+                                                                                 ]
+                                                              }
+                                     }
+                  },
+                  {
+                      "id":  "build-prompt-02",
+                      "name":  "Code: build pattern prompt",
+                      "type":  "n8n-nodes-base.code",
+                      "typeVersion":  2,
+                      "position":  [
+                                       1420,
+                                       140
+                                   ],
+                      "parameters":  {
+                                         "mode":  "runOnceForAllItems",
+                                         "jsCode":  "const video = $(\u0027Code: normalize ready video\u0027).item.json.video;\nconst first = $input.first()?.json;\nconst analysis = Array.isArray(first) ? first[0] : first;\n\nif (!analysis || !analysis.id) {\n  return [{ json: { ok: false, video_id: video.id, batch_id: video.batch_id, error: \u0027No ready competitor_video_analysis row found for this video.\u0027 } }];\n}\n\nconst sourcePackage = {\n  video: {\n    id: video.id,\n    batch_id: video.batch_id,\n    platform: video.platform,\n    url: video.video_url,\n    caption: video.caption,\n    views: video.views,\n    likes: video.likes,\n    comments: video.comments,\n    saves: video.saves,\n    shares: video.shares,\n    account_average_views: video.account_average_views,\n    views_multiplier: video.views_multiplier,\n    engagement_rate: video.engagement_rate,\n    selection_score: video.selection_score,\n    selection_type: video.selection_type,\n    selection_reason: video.selection_reason\n  },\n  analysis: {\n    speech_transcript: analysis.speech_transcript || \u0027\u0027,\n    speech_segments_json: analysis.speech_segments_json || [],\n    screen_text_json: analysis.screen_text_json || [],\n    scene_timeline_json: analysis.scene_timeline_json || [],\n    visual_summary: analysis.visual_summary || \u0027\u0027,\n    audio_bpm: analysis.audio_bpm,\n    audio_energy: analysis.audio_energy,\n    audio_genre: analysis.audio_genre,\n    audio_drop_seconds: analysis.audio_drop_seconds,\n    keyframes_storage_paths: analysis.keyframes_storage_paths || []\n  }\n};\n\nconst schema = {\n  content_pattern: {\n    hook_pattern: \u0027specific first 1-2 sec stop-scroll mechanism\u0027,\n    visual_pattern: \u0027specific visual mechanism\u0027,\n    scenario_pattern: \u0027scene/order structure\u0027,\n    retention_pattern: \u0027why viewers continue watching\u0027,\n    desire_trigger: \u0027status/gift/rarity/premium/attention trigger\u0027,\n    proof_pattern: \u0027trust proof: install, hands, material, packaging, client context\u0027,\n    audio_pattern: \u0027sound role, tempo, energy, drop, mood\u0027,\n    cta_pattern: \u0027how action is created\u0027,\n    adaptation_recipe: \u0027what to keep/change for premium tables without copying\u0027,\n    forbidden_elements_json: [],\n    caution_elements_json: [],\n    pattern_score: 0,\n    virality_score: 0,\n    premium_score: 0,\n    similarity_score: 0\n  },\n  recipes: [\n    { recipe_type: \u0027close_to_competitor\u0027, title: \u0027\u0027, first_frame_formula: \u0027\u0027, scene_formula_json: [], screen_text_formula: \u0027\u0027, audio_formula: \u0027\u0027, cta_formula: \u0027\u0027, what_to_keep_json: [], what_to_change_json: [], what_not_to_copy_json: [], usable_for_products_json: [], score: 0 },\n    { recipe_type: \u0027more_viral\u0027, title: \u0027\u0027, first_frame_formula: \u0027\u0027, scene_formula_json: [], screen_text_formula: \u0027\u0027, audio_formula: \u0027\u0027, cta_formula: \u0027\u0027, what_to_keep_json: [], what_to_change_json: [], what_not_to_copy_json: [], usable_for_products_json: [], score: 0 },\n    { recipe_type: \u0027more_premium\u0027, title: \u0027\u0027, first_frame_formula: \u0027\u0027, scene_formula_json: [], screen_text_formula: \u0027\u0027, audio_formula: \u0027\u0027, cta_formula: \u0027\u0027, what_to_keep_json: [], what_to_change_json: [], what_not_to_copy_json: [], usable_for_products_json: [], score: 0 },\n    { recipe_type: \u0027story\u0027, title: \u0027\u0027, first_frame_formula: \u0027\u0027, scene_formula_json: [], screen_text_formula: \u0027\u0027, audio_formula: \u0027\u0027, cta_formula: \u0027\u0027, what_to_keep_json: [], what_to_change_json: [], what_not_to_copy_json: [], usable_for_products_json: [], score: 0 }\n  ]\n};\n\nconst system = \u0027You are an elite SMM strategist for a content factory. Extract transferable viral patterns for selling premium tables. Be concrete. Return only valid JSON.\u0027;\nconst user = [\n  \u0027Analyze this competitor video package.\u0027,\n  \u0027Goal: maximum views, retention, virality and leads.\u0027,\n  \u0027Do not copy exact text, exact frames, logos, faces or third-party identity.\u0027,\n  \u0027If brand/logo/faces are present, keep the insight but list them as forbidden/caution and replace them in recipes.\u0027,\n  \u0027Output language for text fields: Russian.\u0027,\n  \u0027Return JSON exactly matching this shape:\u0027,\n  JSON.stringify(schema),\n  \u0027SOURCE_PACKAGE:\u0027,\n  JSON.stringify(sourcePackage)\n].join(\u0027\\n\u0027);\n\nreturn [{\n  json: {\n    ok: true,\n    video_id: video.id,\n    batch_id: video.batch_id,\n    analysis_id: analysis.id,\n    sourcePackage,\n    polza_body: {\n      model: \u0027openai/gpt-5.2\u0027,\n      messages: [\n        { role: \u0027system\u0027, content: system },\n        { role: \u0027user\u0027, content: user }\n      ],\n      response_format: { type: \u0027json_object\u0027 },\n      temperature: 0.35\n    }\n  }\n}];"
+                                     }
+                  },
+                  {
+                      "id":  "if-analysis-02",
+                      "name":  "IF: has analysis?",
+                      "type":  "n8n-nodes-base.if",
+                      "typeVersion":  2.3,
+                      "position":  [
+                                       1700,
+                                       140
+                                   ],
+                      "parameters":  {
+                                         "conditions":  {
+                                                            "combinator":  "and",
+                                                            "options":  {
+                                                                            "caseSensitive":  true,
+                                                                            "leftValue":  "",
+                                                                            "typeValidation":  "strict",
+                                                                            "version":  2
+                                                                        },
+                                                            "conditions":  [
+                                                                               {
+                                                                                   "id":  "analysis-ok",
+                                                                                   "leftValue":  "={{ $json.ok }}",
+                                                                                   "operator":  {
+                                                                                                    "type":  "boolean",
+                                                                                                    "operation":  "true",
+                                                                                                    "singleValue":  true
+                                                                                                }
+                                                                               }
+                                                                           ]
+                                                        }
+                                     }
+                  },
+                  {
+                      "id":  "polza-pattern-02",
+                      "name":  "Polza: GPT-5.2 extract pattern",
+                      "type":  "n8n-nodes-base.httpRequest",
+                      "typeVersion":  4.4,
+                      "onError":  "continueRegularOutput",
+                      "position":  [
+                                       1980,
+                                       20
+                                   ],
+                      "parameters":  {
+                                         "url":  "https://polza.ai/api/v1/chat/completions",
+                                         "method":  "POST",
+                                         "sendHeaders":  true,
+                                         "headerParameters":  {
+                                                                  "parameters":  [
+                                                                                     {
+                                                                                         "name":  "Authorization",
+                                                                                         "value":  "Bearer POLZA_API_KEY"
+                                                                                     },
+                                                                                     {
+                                                                                         "name":  "Content-Type",
+                                                                                         "value":  "application/json"
+                                                                                     }
+                                                                                 ]
+                                                              },
+                                         "sendBody":  true,
+                                         "contentType":  "raw",
+                                         "rawContentType":  "application/json",
+                                         "body":  "={{ JSON.stringify($json.polza_body) }}"
+                                     }
+                  },
+                  {
+                      "id":  "parse-pattern-02",
+                      "name":  "Code: parse pattern JSON",
+                      "type":  "n8n-nodes-base.code",
+                      "typeVersion":  2,
+                      "position":  [
+                                       2260,
+                                       20
+                                   ],
+                      "parameters":  {
+                                         "mode":  "runOnceForAllItems",
+                                         "jsCode":  "const source = $(\u0027Code: build pattern prompt\u0027).item.json;\nconst response = $input.first()?.json || {};\nconst rawContent = response.choices?.[0]?.message?.content || response.message?.content || response.content || \u0027\u0027;\n\nfunction clampScore(v, fallback = 0) {\n  const n = Number(v);\n  return Number.isFinite(n) ? Math.max(0, Math.min(100, n)) : fallback;\n}\nfunction asArray(v) {\n  if (Array.isArray(v)) return v;\n  if (v == null || v === \u0027\u0027) return [];\n  return [v];\n}\nfunction parseJson(text) {\n  if (typeof text === \u0027object\u0027 \u0026\u0026 text !== null) return text;\n  const clean = String(text || \u0027\u0027).trim().replace(/^```json\\s*/i, \u0027\u0027).replace(/^```\\s*/i, \u0027\u0027).replace(/```$/i, \u0027\u0027).trim();\n  try { return JSON.parse(clean); } catch (e) {}\n  const start = clean.indexOf(\u0027{\u0027);\n  const end = clean.lastIndexOf(\u0027}\u0027);\n  if (start \u003e= 0 \u0026\u0026 end \u003e start) return JSON.parse(clean.slice(start, end + 1));\n  throw new Error(\u0027Model did not return parseable JSON\u0027);\n}\n\nlet parsed;\ntry {\n  parsed = parseJson(rawContent || response);\n} catch (error) {\n  return [{\n    json: {\n      ok: false,\n      video_id: source.video_id,\n      batch_id: source.batch_id,\n      error: error.message,\n      raw_model_response: String(rawContent || JSON.stringify(response)).slice(0, 3000),\n      update_body: { status: \u0027failed\u0027, updated_at: new Date().toISOString() }\n    }\n  }];\n}\n\nconst p = parsed.content_pattern || parsed.pattern || parsed;\nconst now = new Date().toISOString();\nconst pattern = {\n  competitor_video_id: source.video_id,\n  batch_id: source.batch_id,\n  hook_pattern: String(p.hook_pattern || \u0027\u0027),\n  visual_pattern: String(p.visual_pattern || \u0027\u0027),\n  scenario_pattern: String(p.scenario_pattern || \u0027\u0027),\n  retention_pattern: String(p.retention_pattern || \u0027\u0027),\n  desire_trigger: String(p.desire_trigger || \u0027\u0027),\n  proof_pattern: String(p.proof_pattern || \u0027\u0027),\n  audio_pattern: String(p.audio_pattern || \u0027\u0027),\n  cta_pattern: String(p.cta_pattern || \u0027\u0027),\n  adaptation_recipe: String(p.adaptation_recipe || \u0027\u0027),\n  forbidden_elements_json: asArray(p.forbidden_elements_json),\n  caution_elements_json: asArray(p.caution_elements_json),\n  pattern_score: clampScore(p.pattern_score, 50),\n  virality_score: clampScore(p.virality_score, 50),\n  premium_score: clampScore(p.premium_score, 50),\n  similarity_score: clampScore(p.similarity_score, 50),\n  model_used: \u0027openai/gpt-5.2\u0027,\n  created_at: now,\n  updated_at: now\n};\n\nconst allowed = new Set([\u0027close_to_competitor\u0027, \u0027more_viral\u0027, \u0027more_premium\u0027, \u0027story\u0027]);\nconst recipes = asArray(parsed.recipes).filter(r =\u003e allowed.has(r.recipe_type)).map(r =\u003e ({\n  recipe_type: r.recipe_type,\n  title: String(r.title || r.recipe_type),\n  first_frame_formula: String(r.first_frame_formula || \u0027\u0027),\n  scene_formula_json: asArray(r.scene_formula_json),\n  screen_text_formula: String(r.screen_text_formula || \u0027\u0027),\n  audio_formula: String(r.audio_formula || \u0027\u0027),\n  cta_formula: String(r.cta_formula || \u0027\u0027),\n  what_to_keep_json: asArray(r.what_to_keep_json),\n  what_to_change_json: asArray(r.what_to_change_json),\n  what_not_to_copy_json: asArray(r.what_not_to_copy_json),\n  usable_for_products_json: asArray(r.usable_for_products_json),\n  score: clampScore(r.score, pattern.pattern_score),\n  created_at: now,\n  updated_at: now\n}));\n\nfor (const type of allowed) {\n  if (!recipes.some(r =\u003e r.recipe_type === type)) {\n    recipes.push({\n      recipe_type: type,\n      title: type,\n      first_frame_formula: pattern.hook_pattern,\n      scene_formula_json: [{ step: 1, scene: pattern.scenario_pattern, purpose: \u0027transfer source pattern safely\u0027 }],\n      screen_text_formula: pattern.hook_pattern,\n      audio_formula: pattern.audio_pattern,\n      cta_formula: pattern.cta_pattern,\n      what_to_keep_json: [pattern.hook_pattern, pattern.retention_pattern].filter(Boolean),\n      what_to_change_json: [\u0027words\u0027, \u0027product\u0027, \u0027branding\u0027, \u0027exact framing\u0027],\n      what_not_to_copy_json: pattern.forbidden_elements_json,\n      usable_for_products_json: [\u0027premium tables\u0027],\n      score: pattern.pattern_score,\n      created_at: now,\n      updated_at: now\n    });\n  }\n}\n\nreturn [{ json: { ok: true, video_id: source.video_id, batch_id: source.batch_id, pattern, recipes, update_body: { status: \u0027pattern_extracted\u0027, updated_at: now } } }];"
+                                     }
+                  },
+                  {
+                      "id":  "if-pattern-ok-02",
+                      "name":  "IF: pattern parsed?",
+                      "type":  "n8n-nodes-base.if",
+                      "typeVersion":  2.3,
+                      "position":  [
+                                       2540,
+                                       20
+                                   ],
+                      "parameters":  {
+                                         "conditions":  {
+                                                            "combinator":  "and",
+                                                            "options":  {
+                                                                            "caseSensitive":  true,
+                                                                            "leftValue":  "",
+                                                                            "typeValidation":  "strict",
+                                                                            "version":  2
+                                                                        },
+                                                            "conditions":  [
+                                                                               {
+                                                                                   "id":  "pattern-ok",
+                                                                                   "leftValue":  "={{ $json.ok }}",
+                                                                                   "operator":  {
+                                                                                                    "type":  "boolean",
+                                                                                                    "operation":  "true",
+                                                                                                    "singleValue":  true
+                                                                                                }
+                                                                               }
+                                                                           ]
+                                                        }
+                                     }
+                  },
+                  {
+                      "id":  "insert-pattern-02",
+                      "name":  "Supabase: insert content pattern",
+                      "type":  "n8n-nodes-base.httpRequest",
+                      "typeVersion":  4.4,
+                      "position":  [
+                                       2820,
+                                       -100
+                                   ],
+                      "parameters":  {
+                                         "url":  "https://xxnzqridvepixzireqjh.supabase.co/rest/v1/content_patterns",
+                                         "method":  "POST",
+                                         "sendHeaders":  true,
+                                         "headerParameters":  {
+                                                                  "parameters":  [
+                                                                                     {
+                                                                                         "name":  "apikey",
+                                                                                         "value":  "SUPABASE_SECRET_KEY"
+                                                                                     },
+                                                                                     {
+                                                                                         "name":  "Authorization",
+                                                                                         "value":  "Bearer SUPABASE_SECRET_KEY"
+                                                                                     },
+                                                                                     {
+                                                                                         "name":  "Content-Type",
+                                                                                         "value":  "application/json"
+                                                                                     },
+                                                                                     {
+                                                                                         "name":  "Prefer",
+                                                                                         "value":  "return=representation"
+                                                                                     }
+                                                                                 ]
+                                                              },
+                                         "sendBody":  true,
+                                         "contentType":  "raw",
+                                         "rawContentType":  "application/json",
+                                         "body":  "={{ JSON.stringify($json.pattern) }}"
+                                     }
+                  },
+                  {
+                      "id":  "build-recipes-02",
+                      "name":  "Code: attach pattern id to recipes",
+                      "type":  "n8n-nodes-base.code",
+                      "typeVersion":  2,
+                      "position":  [
+                                       3100,
+                                       -100
+                                   ],
+                      "parameters":  {
+                                         "mode":  "runOnceForAllItems",
+                                         "jsCode":  "const inserted = $input.first()?.json;\nconst patternRow = Array.isArray(inserted) ? inserted[0] : inserted;\nconst parsed = $(\u0027Code: parse pattern JSON\u0027).item.json;\n\nif (!patternRow?.id) {\n  throw new Error(\u0027content_patterns insert did not return pattern id\u0027);\n}\n\nconst rows = parsed.recipes.map(r =\u003e ({ ...r, content_pattern_id: patternRow.id }));\nreturn [{ json: { video_id: parsed.video_id, batch_id: parsed.batch_id, pattern_id: patternRow.id, recipes: rows, update_body: parsed.update_body } }];"
+                                     }
+                  },
+                  {
+                      "id":  "insert-recipes-02",
+                      "name":  "Supabase: insert pattern recipes",
+                      "type":  "n8n-nodes-base.httpRequest",
+                      "typeVersion":  4.4,
+                      "position":  [
+                                       3380,
+                                       -100
+                                   ],
+                      "parameters":  {
+                                         "url":  "https://xxnzqridvepixzireqjh.supabase.co/rest/v1/pattern_recipes",
+                                         "method":  "POST",
+                                         "sendHeaders":  true,
+                                         "headerParameters":  {
+                                                                  "parameters":  [
+                                                                                     {
+                                                                                         "name":  "apikey",
+                                                                                         "value":  "SUPABASE_SECRET_KEY"
+                                                                                     },
+                                                                                     {
+                                                                                         "name":  "Authorization",
+                                                                                         "value":  "Bearer SUPABASE_SECRET_KEY"
+                                                                                     },
+                                                                                     {
+                                                                                         "name":  "Content-Type",
+                                                                                         "value":  "application/json"
+                                                                                     },
+                                                                                     {
+                                                                                         "name":  "Prefer",
+                                                                                         "value":  "return=representation"
+                                                                                     }
+                                                                                 ]
+                                                              },
+                                         "sendBody":  true,
+                                         "contentType":  "raw",
+                                         "rawContentType":  "application/json",
+                                         "body":  "={{ JSON.stringify($json.recipes) }}"
+                                     }
+                  },
+                  {
+                      "id":  "mark-extracted-02",
+                      "name":  "Supabase: mark video pattern_extracted",
+                      "type":  "n8n-nodes-base.httpRequest",
+                      "typeVersion":  4.4,
+                      "position":  [
+                                       3660,
+                                       -100
+                                   ],
+                      "parameters":  {
+                                         "url":  "={{ \u0027https://xxnzqridvepixzireqjh.supabase.co/rest/v1/competitor_videos?id=eq.\u0027 + $(\u0027Code: attach pattern id to recipes\u0027).item.json.video_id }}",
+                                         "method":  "PATCH",
+                                         "sendHeaders":  true,
+                                         "headerParameters":  {
+                                                                  "parameters":  [
+                                                                                     {
+                                                                                         "name":  "apikey",
+                                                                                         "value":  "SUPABASE_SECRET_KEY"
+                                                                                     },
+                                                                                     {
+                                                                                         "name":  "Authorization",
+                                                                                         "value":  "Bearer SUPABASE_SECRET_KEY"
+                                                                                     },
+                                                                                     {
+                                                                                         "name":  "Content-Type",
+                                                                                         "value":  "application/json"
+                                                                                     },
+                                                                                     {
+                                                                                         "name":  "Prefer",
+                                                                                         "value":  "return=representation"
+                                                                                     }
+                                                                                 ]
+                                                              },
+                                         "sendBody":  true,
+                                         "contentType":  "raw",
+                                         "rawContentType":  "application/json",
+                                         "body":  "={{ JSON.stringify($(\u0027Code: attach pattern id to recipes\u0027).item.json.update_body) }}"
+                                     }
+                  },
+                  {
+                      "id":  "mark-failed-02",
+                      "name":  "Supabase: mark pattern failed",
+                      "type":  "n8n-nodes-base.httpRequest",
+                      "typeVersion":  4.4,
+                      "position":  [
+                                       2820,
+                                       160
+                                   ],
+                      "parameters":  {
+                                         "url":  "={{ \u0027https://xxnzqridvepixzireqjh.supabase.co/rest/v1/competitor_videos?id=eq.\u0027 + $json.video_id }}",
+                                         "method":  "PATCH",
+                                         "sendHeaders":  true,
+                                         "headerParameters":  {
+                                                                  "parameters":  [
+                                                                                     {
+                                                                                         "name":  "apikey",
+                                                                                         "value":  "SUPABASE_SECRET_KEY"
+                                                                                     },
+                                                                                     {
+                                                                                         "name":  "Authorization",
+                                                                                         "value":  "Bearer SUPABASE_SECRET_KEY"
+                                                                                     },
+                                                                                     {
+                                                                                         "name":  "Content-Type",
+                                                                                         "value":  "application/json"
+                                                                                     },
+                                                                                     {
+                                                                                         "name":  "Prefer",
+                                                                                         "value":  "return=representation"
+                                                                                     }
+                                                                                 ]
+                                                              },
+                                         "sendBody":  true,
+                                         "contentType":  "raw",
+                                         "rawContentType":  "application/json",
+                                         "body":  "={{ JSON.stringify($json.update_body || { status: \u0027failed\u0027, updated_at: new Date().toISOString() }) }}"
+                                     }
+                  },
+                  {
+                      "id":  "no-ready-video-02",
+                      "name":  "Code: no ready video",
+                      "type":  "n8n-nodes-base.code",
+                      "typeVersion":  2,
+                      "position":  [
+                                       1140,
+                                       420
+                                   ],
+                      "parameters":  {
+                                         "mode":  "runOnceForAllItems",
+                                         "jsCode":  "return [{ json: { action: \u0027skip\u0027, message: \u0027No ready videos are waiting for WF02.\u0027 } }];"
+                                     }
+                  },
+                  {
+                      "id":  "no-analysis-02",
+                      "name":  "Supabase: mark missing analysis failed",
+                      "type":  "n8n-nodes-base.httpRequest",
+                      "typeVersion":  4.4,
+                      "position":  [
+                                       1980,
+                                       280
+                                   ],
+                      "parameters":  {
+                                         "url":  "={{ \u0027https://xxnzqridvepixzireqjh.supabase.co/rest/v1/competitor_videos?id=eq.\u0027 + $json.video_id }}",
+                                         "method":  "PATCH",
+                                         "sendHeaders":  true,
+                                         "headerParameters":  {
+                                                                  "parameters":  [
+                                                                                     {
+                                                                                         "name":  "apikey",
+                                                                                         "value":  "SUPABASE_SECRET_KEY"
+                                                                                     },
+                                                                                     {
+                                                                                         "name":  "Authorization",
+                                                                                         "value":  "Bearer SUPABASE_SECRET_KEY"
+                                                                                     },
+                                                                                     {
+                                                                                         "name":  "Content-Type",
+                                                                                         "value":  "application/json"
+                                                                                     },
+                                                                                     {
+                                                                                         "name":  "Prefer",
+                                                                                         "value":  "return=representation"
+                                                                                     }
+                                                                                 ]
+                                                              },
+                                         "sendBody":  true,
+                                         "contentType":  "raw",
+                                         "rawContentType":  "application/json",
+                                         "body":  "={{ JSON.stringify({ status: \u0027failed\u0027, updated_at: new Date().toISOString() }) }}"
+                                     }
+                  }
+              ],
+    "connections":  {
+                        "Schedule: extract next pattern":  {
+                                                               "main":  [
+                                                                            [
+                                                                                {
+                                                                                    "node":  "Supabase: read ready video",
+                                                                                    "type":  "main",
+                                                                                    "index":  0
+                                                                                }
+                                                                            ]
+                                                                        ]
+                                                           },
+                        "Webhook: manual WF02":  {
+                                                     "main":  [
+                                                                  [
+                                                                      {
+                                                                          "node":  "Supabase: read ready video",
+                                                                          "type":  "main",
+                                                                          "index":  0
+                                                                      }
+                                                                  ]
+                                                              ]
+                                                 },
+                        "Supabase: read ready video":  {
+                                                           "main":  [
+                                                                        [
+                                                                            {
+                                                                                "node":  "Code: normalize ready video",
+                                                                                "type":  "main",
+                                                                                "index":  0
+                                                                            }
+                                                                        ]
+                                                                    ]
+                                                       },
+                        "Code: normalize ready video":  {
+                                                            "main":  [
+                                                                         [
+                                                                             {
+                                                                                 "node":  "IF: has ready video?",
+                                                                                 "type":  "main",
+                                                                                 "index":  0
+                                                                             }
+                                                                         ]
+                                                                     ]
+                                                        },
+                        "IF: has ready video?":  {
+                                                     "main":  [
+                                                                  [
+                                                                      {
+                                                                          "node":  "Supabase: read video analysis",
+                                                                          "type":  "main",
+                                                                          "index":  0
+                                                                      }
+                                                                  ],
+                                                                  [
+                                                                      {
+                                                                          "node":  "Code: no ready video",
+                                                                          "type":  "main",
+                                                                          "index":  0
+                                                                      }
+                                                                  ]
+                                                              ]
+                                                 },
+                        "Supabase: read video analysis":  {
+                                                              "main":  [
+                                                                           [
+                                                                               {
+                                                                                   "node":  "Code: build pattern prompt",
+                                                                                   "type":  "main",
+                                                                                   "index":  0
+                                                                               }
+                                                                           ]
+                                                                       ]
+                                                          },
+                        "Code: build pattern prompt":  {
+                                                           "main":  [
+                                                                        [
+                                                                            {
+                                                                                "node":  "IF: has analysis?",
+                                                                                "type":  "main",
+                                                                                "index":  0
+                                                                            }
+                                                                        ]
+                                                                    ]
+                                                       },
+                        "IF: has analysis?":  {
+                                                  "main":  [
+                                                               [
+                                                                   {
+                                                                       "node":  "Polza: GPT-5.2 extract pattern",
+                                                                       "type":  "main",
+                                                                       "index":  0
+                                                                   }
+                                                               ],
+                                                               [
+                                                                   {
+                                                                       "node":  "Supabase: mark missing analysis failed",
+                                                                       "type":  "main",
+                                                                       "index":  0
+                                                                   }
+                                                               ]
+                                                           ]
+                                              },
+                        "Polza: GPT-5.2 extract pattern":  {
+                                                               "main":  [
+                                                                            [
+                                                                                {
+                                                                                    "node":  "Code: parse pattern JSON",
+                                                                                    "type":  "main",
+                                                                                    "index":  0
+                                                                                }
+                                                                            ]
+                                                                        ]
+                                                           },
+                        "Code: parse pattern JSON":  {
+                                                         "main":  [
+                                                                      [
+                                                                          {
+                                                                              "node":  "IF: pattern parsed?",
+                                                                              "type":  "main",
+                                                                              "index":  0
+                                                                          }
+                                                                      ]
+                                                                  ]
+                                                     },
+                        "IF: pattern parsed?":  {
+                                                    "main":  [
+                                                                 [
+                                                                     {
+                                                                         "node":  "Supabase: insert content pattern",
+                                                                         "type":  "main",
+                                                                         "index":  0
+                                                                     }
+                                                                 ],
+                                                                 [
+                                                                     {
+                                                                         "node":  "Supabase: mark pattern failed",
+                                                                         "type":  "main",
+                                                                         "index":  0
+                                                                     }
+                                                                 ]
+                                                             ]
+                                                },
+                        "Supabase: insert content pattern":  {
+                                                                 "main":  [
+                                                                              [
+                                                                                  {
+                                                                                      "node":  "Code: attach pattern id to recipes",
+                                                                                      "type":  "main",
+                                                                                      "index":  0
+                                                                                  }
+                                                                              ]
+                                                                          ]
+                                                             },
+                        "Code: attach pattern id to recipes":  {
+                                                                   "main":  [
+                                                                                [
+                                                                                    {
+                                                                                        "node":  "Supabase: insert pattern recipes",
+                                                                                        "type":  "main",
+                                                                                        "index":  0
+                                                                                    }
+                                                                                ]
+                                                                            ]
+                                                               },
+                        "Supabase: insert pattern recipes":  {
+                                                                 "main":  [
+                                                                              [
+                                                                                  {
+                                                                                      "node":  "Supabase: mark video pattern_extracted",
+                                                                                      "type":  "main",
+                                                                                      "index":  0
+                                                                                  }
+                                                                              ]
+                                                                          ]
+                                                             }
+                    },
+    "settings":  {
+                     "executionOrder":  "v1"
+                 },
+    "tags":  [
+
+             ]
+}
+

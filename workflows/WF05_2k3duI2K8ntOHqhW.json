@@ -1,0 +1,348 @@
+{
+  "id": "2k3duI2K8ntOHqhW",
+  "name": "рџ“Ў 05 | Р”РёСЃС‚СЂРёР±СѓС†РёСЏ вЂ” Instagram + Telegram",
+  "active": false,
+  "isArchived": false,
+  "nodes": [
+    {
+      "id": "note-05",
+      "name": "рџ“‹ РћРїРёСЃР°РЅРёРµ",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [-208, 0],
+      "parameters": {
+        "content": "## рџ“Ў РњРѕРґСѓР»СЊ 5 вЂ” Р”РёСЃС‚СЂРёР±СѓС†РёСЏ\n**Р—Р°РїСѓСЃРє:** 12:00 РµР¶РµРґРЅРµРІРЅРѕ\n\n**РџР°Р№РїР»Р°Р№РЅ:**\nT2 ready в†’ Р·Р°РіСЂСѓР·РєР° РІ Storage в†’ Switch РїР»Р°С‚С„РѕСЂРјР° в†’ Buffer API (IG) / Telegram Bot в†’ T2 published в†’ СѓРґР°Р»РёС‚СЊ С„Р°Р№Р» С‡РµСЂРµР· 1С‡",
+        "height": 200,
+        "width": 400
+      }
+    },
+    {
+      "id": "schedule-05",
+      "name": "вЏ° Schedule: 12:00 РµР¶РµРґРЅРµРІРЅРѕ",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [0, 304],
+      "parameters": {
+        "rule": {
+          "interval": [{"field": "cronExpression", "expression": "0 12 * * *"}]
+        }
+      }
+    },
+    {
+      "id": "read-queue-05",
+      "name": "рџ“Ґ Supabase T2: РѕС‡РµСЂРµРґСЊ 'ready'",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [256, 304],
+      "parameters": {
+        "url": "https://jlenlqhudcgkmnxnkguk.supabase.co/rest/v1/my_content?status=eq.ready&order=created_at.asc&limit=5&select=*",
+        "method": "GET",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {"name": "apikey", "value": "SUPABASE_SECRET_KEY"},
+            {"name": "Authorization", "value": "Bearer SUPABASE_SECRET_KEY"}
+          ]
+        }
+      }
+    },
+    {
+      "id": "random-delay-05",
+      "name": "вЏ± Р Р°РЅРґРѕРјРЅР°СЏ Р·Р°РґРµСЂР¶РєР° В±20 РјРёРЅ",
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [480, 304],
+      "parameters": {
+        "resume": "timeInterval",
+        "amount": "={{ Math.floor(Math.random() * 1200) }}",
+        "unit": "seconds"
+      }
+    },
+    {
+      "id": "4657313a-4ba9-44d4-85cc-29b2c7ca5518",
+      "name": "в¬†пёЏ Upload: Supabase Storage",
+      "type": "n8n-nodes-base.executeCommand",
+      "typeVersion": 1,
+      "position": [608, 304],
+      "parameters": {
+        "command": "=FILE={{ $json.file_path }} && FNAME=$(basename \"$FILE\") && curl -s -o /dev/null -w \"%{http_code}\" -X POST https://jlenlqhudcgkmnxnkguk.supabase.co/storage/v1/object/content/$FNAME -H \"Authorization: Bearer SUPABASE_SECRET_KEY\" -H \"Content-Type: video/mp4\" --data-binary @\"$FILE\""
+      }
+    },
+    {
+      "id": "2e5f2141-c3ab-4430-a565-aa99a90186fb",
+      "name": "рџ“Ћ Set Storage URL",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [800, 304],
+      "parameters": {
+        "language": "javaScript",
+        "mode": "runOnceForEachItem",
+        "jsCode": "const t2 = $('рџ“Ґ Supabase T2: РѕС‡РµСЂРµРґСЊ \\'ready\\'').item.json;\nconst filename = t2.file_path.split('/').pop();\nconst storageUrl = 'https://jlenlqhudcgkmnxnkguk.supabase.co/storage/v1/object/public/content/' + filename;\nif ($json.exitCode !== 0) {\n  throw new Error('Storage upload failed: ' + $json.stderr);\n}\nreturn { json: { ...t2, storage_url: storageUrl, filename } };"
+      }
+    },
+    {
+      "id": "switch-platform-05",
+      "name": "рџ”Ђ Switch: Instagram / Telegram",
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3,
+      "position": [1008, 304],
+      "parameters": {
+        "mode": "rules",
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "conditions": [{"id": "rule-ig", "leftValue": "={{ $json.platform }}", "rightValue": "instagram", "operator": {"type": "string", "operation": "equals"}}],
+                "combinator": "and"
+              }
+            },
+            {
+              "conditions": {
+                "conditions": [{"id": "rule-tg", "leftValue": "={{ $json.platform }}", "rightValue": "telegram", "operator": {"type": "string", "operation": "equals"}}],
+                "combinator": "and"
+              }
+            }
+          ]
+        },
+        "fallbackOutput": "extra",
+        "options": {}
+      }
+    },
+    {
+      "id": "ig-switch-type-05",
+      "name": "рџ”Ђ Instagram: Switch С‚РёРї РєРѕРЅС‚РµРЅС‚Р°",
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3,
+      "position": [1264, 112],
+      "parameters": {
+        "mode": "rules",
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "conditions": [{"id": "rule-reel", "leftValue": "={{ $json.format }}", "rightValue": "reel", "operator": {"type": "string", "operation": "contains"}}],
+                "combinator": "and"
+              }
+            },
+            {
+              "conditions": {
+                "conditions": [{"id": "rule-story", "leftValue": "={{ $json.format }}", "rightValue": "story", "operator": {"type": "string", "operation": "equals"}}],
+                "combinator": "and"
+              }
+            }
+          ]
+        },
+        "fallbackOutput": "extra",
+        "options": {}
+      }
+    },
+    {
+      "id": "ig-post-05",
+      "name": "рџ“¤ Buffer API: РїСѓР±Р»РёРєР°С†РёСЏ",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [1504, 112],
+      "parameters": {
+        "url": "https://api.bufferapp.com/1/updates/create.json",
+        "method": "POST",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [{"name": "Content-Type", "value": "application/x-www-form-urlencoded"}]
+        },
+        "sendBody": true,
+        "contentType": "form-urlencoded",
+        "bodyParameters": {
+          "parameters": [
+            {"name": "access_token", "value": "fY15vB80QNAnzWsbjzY-6a3NHzZdGz-dXXv_rm0MMDM"},
+            {"name": "profile_ids[]", "value": "69cf0c6daf47dacb69829e1a"},
+            {"name": "text", "value": "={{ $json.caption + '\\n\\n' + $json.hashtags }}"},
+            {"name": "media[video]", "value": "={{ $json.storage_url }}"},
+            {"name": "now", "value": "true"}
+          ]
+        }
+      }
+    },
+    {
+      "id": "ig-check-05",
+      "name": "вњ… Buffer: РїСЂРѕРІРµСЂРёС‚СЊ РѕС‚РІРµС‚",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1760, 112],
+      "parameters": {
+        "language": "javaScript",
+        "mode": "runOnceForEachItem",
+        "jsCode": "const res = $json;\nif (!res.id && !res.success) {\n  throw new Error('Buffer API error: ' + JSON.stringify(res));\n}\nconst bufferId = res.id || (res.updates && res.updates[0] && res.updates[0].id);\nconst src = $('рџ“Ћ Set Storage URL').item.json;\nreturn { json: { ...src, buffer_post_id: bufferId } };"
+      }
+    },
+    {
+      "id": "tg-adapt-05",
+      "name": "рџ§  GPT-4o: Р°РґР°РїС‚Р°С†РёСЏ РІ TG С„РѕСЂРјР°С‚",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [1264, 464],
+      "parameters": {
+        "url": "https://polza.ai/api/v1/chat/completions",
+        "method": "POST",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {"name": "Authorization", "value": "Bearer POLZA_API_KEY"},
+            {"name": "Content-Type", "value": "application/json"}
+          ]
+        },
+        "sendBody": true,
+        "contentType": "raw",
+        "rawContentType": "application/json",
+        "body": "={{ JSON.stringify({ model: 'openai/gpt-4o', messages: [{ role: 'system', content: 'РђРґР°РїС‚РёСЂСѓР№ Instagram РїРѕСЃС‚ РґР»СЏ Telegram-РєР°РЅР°Р»Р°: СѓР±РµСЂРё С…СЌС€С‚РµРіРё, РґРѕР±Р°РІСЊ CTA РІ РєРѕРЅС†Рµ, РґРѕР±Р°РІСЊ СЌРјРѕРґР·Рё. Р’РµСЂРЅРё С‚РѕР»СЊРєРѕ С‚РµРєСЃС‚.' }, { role: 'user', content: $json.caption }], temperature: 0.7 }) }}"
+      }
+    },
+    {
+      "id": "tg-post-05",
+      "name": "вњ€пёЏ Telegram Bot API: РѕС‚РїСЂР°РІРёС‚СЊ",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [1504, 464],
+      "parameters": {
+        "url": "={{ $json.format && $json.format.includes('reel') ? 'https://api.telegram.org/bot8646017601:AAH4C_nIHvnYqqdBWXVp_BJYxTbQ609nJ4Q/sendVideo' : 'https://api.telegram.org/bot8646017601:AAH4C_nIHvnYqqdBWXVp_BJYxTbQ609nJ4Q/sendPhoto' }}",
+        "method": "POST",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [{"name": "Content-Type", "value": "application/json"}]
+        },
+        "sendBody": true,
+        "contentType": "raw",
+        "rawContentType": "application/json",
+        "body": "={{ JSON.stringify({ chat_id: '@digital_auto', [$json.format && $json.format.includes('reel') ? 'video' : 'photo']: $json.storage_url, caption: $json.choices && $json.choices[0] ? $json.choices[0].message.content : $json.caption, parse_mode: 'HTML' }) }}"
+      }
+    },
+    {
+      "id": "tg-check-05",
+      "name": "вњ… РџСЂРѕРІРµСЂРёС‚СЊ message_id",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1760, 464],
+      "parameters": {
+        "language": "javaScript",
+        "mode": "runOnceForEachItem",
+        "jsCode": "const res = $json;\nif (!res.ok || !res.result || !res.result.message_id) {\n  throw new Error('Telegram error: ' + (res.description || JSON.stringify(res)));\n}\nconst src = $('рџ“Ћ Set Storage URL').item.json;\nreturn { json: { ...src, tg_message_id: res.result.message_id } };"
+      }
+    },
+    {
+      "id": "update-t2-05",
+      "name": "рџ’ѕ Supabase T2: СЃС‚Р°С‚СѓСЃ 'published'",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [2000, 304],
+      "parameters": {
+        "url": "={{ 'https://jlenlqhudcgkmnxnkguk.supabase.co/rest/v1/my_content?id=eq.' + $json.id }}",
+        "method": "PATCH",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {"name": "apikey", "value": "SUPABASE_SECRET_KEY"},
+            {"name": "Authorization", "value": "Bearer SUPABASE_SECRET_KEY"},
+            {"name": "Content-Type", "value": "application/json"},
+            {"name": "Prefer", "value": "return=minimal"}
+          ]
+        },
+        "sendBody": true,
+        "contentType": "raw",
+        "rawContentType": "application/json",
+        "body": "={{ JSON.stringify({ status: 'published', published_at: new Date().toISOString(), buffer_post_id: $json.buffer_post_id || null, tg_message_id: $json.tg_message_id || null }) }}"
+      }
+    },
+    {
+      "id": "delete-file-05",
+      "name": "рџ—‘ РЈРґР°Р»РёС‚СЊ С„Р°Р№Р» С‡РµСЂРµР· 1С‡",
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [2192, 304],
+      "parameters": {
+        "resume": "timeInterval",
+        "amount": 3600,
+        "unit": "seconds"
+      }
+    },
+    {
+      "id": "fde664cd-30ce-4b2d-a3ff-f634114e00dd",
+      "name": "рџ—‘ Execute: СѓРґР°Р»РёС‚СЊ С„Р°Р№Р»С‹",
+      "type": "n8n-nodes-base.executeCommand",
+      "typeVersion": 1,
+      "position": [2368, 304],
+      "parameters": {
+        "command": "=rm -f \"{{ $json.file_path }}\" && curl -s -X DELETE \"https://jlenlqhudcgkmnxnkguk.supabase.co/storage/v1/object/content/{{ $json.filename }}\" -H \"Authorization: Bearer SUPABASE_SECRET_KEY\" && echo done"
+      }
+    },
+    {
+      "id": "monitor-05",
+      "name": "рџ“Ў Monitor: СѓРІРµРґРѕРјР»РµРЅРёРµ РІ Р±РѕС‚",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [2576, 304],
+      "parameters": {
+        "url": "https://api.telegram.org/bot8646017601:AAH4C_nIHvnYqqdBWXVp_BJYxTbQ609nJ4Q/sendMessage",
+        "method": "POST",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [{"name": "Content-Type", "value": "application/json"}]
+        },
+        "sendBody": true,
+        "contentType": "raw",
+        "rawContentType": "application/json",
+        "body": "={{ JSON.stringify({ chat_id: '1347534574', text: 'вњ… РћРїСѓР±Р»РёРєРѕРІР°РЅРѕ: ' + ($json.format || '?') + ' вЂ” ' + ($json.hook || $json.caption || '?') + '\\nBuffer ID: ' + ($json.buffer_post_id || 'вЂ”') + '\\nTG ID: ' + ($json.tg_message_id || 'вЂ”') }) }}"
+      }
+    }
+  ],
+  "connections": {
+    "вЏ° Schedule: 12:00 РµР¶РµРґРЅРµРІРЅРѕ": {
+      "main": [[{"node": "рџ“Ґ Supabase T2: РѕС‡РµСЂРµРґСЊ 'ready'", "type": "main", "index": 0}]]
+    },
+    "рџ“Ґ Supabase T2: РѕС‡РµСЂРµРґСЊ 'ready'": {
+      "main": [[{"node": "вЏ± Р Р°РЅРґРѕРјРЅР°СЏ Р·Р°РґРµСЂР¶РєР° В±20 РјРёРЅ", "type": "main", "index": 0}]]
+    },
+    "вЏ± Р Р°РЅРґРѕРјРЅР°СЏ Р·Р°РґРµСЂР¶РєР° В±20 РјРёРЅ": {
+      "main": [[{"node": "в¬†пёЏ Upload: Supabase Storage", "type": "main", "index": 0}]]
+    },
+    "в¬†пёЏ Upload: Supabase Storage": {
+      "main": [[{"node": "рџ“Ћ Set Storage URL", "type": "main", "index": 0}]]
+    },
+    "рџ“Ћ Set Storage URL": {
+      "main": [[{"node": "рџ”Ђ Switch: Instagram / Telegram", "type": "main", "index": 0}]]
+    },
+    "рџ”Ђ Switch: Instagram / Telegram": {
+      "main": [
+        [{"node": "рџ”Ђ Instagram: Switch С‚РёРї РєРѕРЅС‚РµРЅС‚Р°", "type": "main", "index": 0}],
+        [{"node": "рџ§  GPT-4o: Р°РґР°РїС‚Р°С†РёСЏ РІ TG С„РѕСЂРјР°С‚", "type": "main", "index": 0}]
+      ]
+    },
+    "рџ”Ђ Instagram: Switch С‚РёРї РєРѕРЅС‚РµРЅС‚Р°": {
+      "main": [[{"node": "рџ“¤ Buffer API: РїСѓР±Р»РёРєР°С†РёСЏ", "type": "main", "index": 0}]]
+    },
+    "рџ“¤ Buffer API: РїСѓР±Р»РёРєР°С†РёСЏ": {
+      "main": [[{"node": "вњ… Buffer: РїСЂРѕРІРµСЂРёС‚СЊ РѕС‚РІРµС‚", "type": "main", "index": 0}]]
+    },
+    "вњ… Buffer: РїСЂРѕРІРµСЂРёС‚СЊ РѕС‚РІРµС‚": {
+      "main": [[{"node": "рџ’ѕ Supabase T2: СЃС‚Р°С‚СѓСЃ 'published'", "type": "main", "index": 0}]]
+    },
+    "рџ§  GPT-4o: Р°РґР°РїС‚Р°С†РёСЏ РІ TG С„РѕСЂРјР°С‚": {
+      "main": [[{"node": "вњ€пёЏ Telegram Bot API: РѕС‚РїСЂР°РІРёС‚СЊ", "type": "main", "index": 0}]]
+    },
+    "вњ€пёЏ Telegram Bot API: РѕС‚РїСЂР°РІРёС‚СЊ": {
+      "main": [[{"node": "вњ… РџСЂРѕРІРµСЂРёС‚СЊ message_id", "type": "main", "index": 0}]]
+    },
+    "вњ… РџСЂРѕРІРµСЂРёС‚СЊ message_id": {
+      "main": [[{"node": "рџ’ѕ Supabase T2: СЃС‚Р°С‚СѓСЃ 'published'", "type": "main", "index": 0}]]
+    },
+    "рџ’ѕ Supabase T2: СЃС‚Р°С‚СѓСЃ 'published'": {
+      "main": [[{"node": "рџ—‘ РЈРґР°Р»РёС‚СЊ С„Р°Р№Р» С‡РµСЂРµР· 1С‡", "type": "main", "index": 0}]]
+    },
+    "рџ—‘ РЈРґР°Р»РёС‚СЊ С„Р°Р№Р» С‡РµСЂРµР· 1С‡": {
+      "main": [[{"node": "рџ—‘ Execute: СѓРґР°Р»РёС‚СЊ С„Р°Р№Р»С‹", "type": "main", "index": 0}]]
+    },
+    "рџ—‘ Execute: СѓРґР°Р»РёС‚СЊ С„Р°Р№Р»С‹": {
+      "main": [[{"node": "рџ“Ў Monitor: СѓРІРµРґРѕРјР»РµРЅРёРµ РІ Р±РѕС‚", "type": "main", "index": 0}]]
+    }
+  },
+  "settings": {"executionOrder": "v1"}
+}
+

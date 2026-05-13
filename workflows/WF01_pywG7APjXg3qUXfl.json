@@ -1,0 +1,248 @@
+{
+  "id": "pywG7APjXg3qUXfl",
+  "name": "рџ”Ќ 01 | Р Р°Р·РІРµРґРєР° вЂ” РџР°СЂСЃРёРЅРі РєРѕРЅРєСѓСЂРµРЅС‚РѕРІ",
+  "active": false,
+  "isArchived": false,
+  "nodes": [
+    {
+      "id": "note-01",
+      "name": "рџ“‹ РћРїРёСЃР°РЅРёРµ",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [-208, 0],
+      "parameters": {
+        "content": "## рџ”Ќ РњРѕРґСѓР»СЊ 1 вЂ” Р Р°Р·РІРµРґРєР°\n**Р—Р°РїСѓСЃРє:** РµР¶РµРЅРµРґРµР»СЊРЅРѕ (РІРѕСЃРєСЂРµСЃРµРЅСЊРµ 22:00)\n\n**РџР°Р№РїР»Р°Р№РЅ:**\nApify 40 С…СЌС€С‚РµРіРѕРІ в†’ С„РёР»СЊС‚СЂ С‚РѕРї-20% в†’ FFmpeg Р°СѓРґРёРѕ в†’ librosa BPM в†’ GPT-4o Vision в†’ Code СЃР±РѕСЂРєР° в†’ Supabase T3\n\n**LLM:**\n- GPT-4o Vision: OCR РѕРІРµСЂР»РµРµРІ + С†РІРµС‚Р° + СЃС‚РёР»СЊ\n- librosa :8002: BPM + Р¶Р°РЅСЂ + СЌРЅРµСЂРіРµС‚РёРєР°\n\n**Transcript:** caption РїРѕСЃС‚Р° (V1)\n**Vision:** thumbnail РёР· Apify РїРѕ URL",
+        "height": 300,
+        "width": 420,
+        "color": 5
+      }
+    },
+    {
+      "id": "schedule-01",
+      "name": "вЏ° Schedule: РІРѕСЃРєСЂРµСЃРµРЅСЊРµ 22:00",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [0, 304],
+      "parameters": {
+        "rule": {
+          "interval": [{"field": "cronExpression", "expression": "0 22 * * 0"}]
+        }
+      }
+    },
+    {
+      "id": "hashtags-01",
+      "name": "рџ“‹ РЎРїРёСЃРѕРє 40 С…СЌС€С‚РµРіРѕРІ",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [256, 304],
+      "parameters": {
+        "language": "javaScript",
+        "jsCode": "return [{json: {hashtags: ['СЃРѕР·РґР°РЅРёРµСЃР°Р№С‚РѕРІ','СЃР°Р№С‚РїРѕРґРєР»СЋС‡','СЂР°Р·СЂР°Р±РѕС‚РєР°СЃР°Р№С‚РѕРІ','РїСЂРѕРґР°СЋС‰РёР№СЃР°Р№С‚','Р»РµРЅРґРёРЅРі','Р»РµРЅРґРёРЅРіРїРѕРґРєР»СЋС‡','РєР»РёРµРЅС‚С‹РёР·РёРЅС‚РµСЂРЅРµС‚Р°','РїРѕС‚РѕРєРєР»РёРµРЅС‚РѕРІ','Р·Р°СЏРІРєРёРёР·СЃР°Р№С‚Р°','РїСЂРѕРґРІРёР¶РµРЅРёРµР±РёР·РЅРµСЃР°','Р»РёРґРѕРіРµРЅРµСЂР°С†РёСЏ','Р°РІС‚РѕРјР°С‚РёР·Р°С†РёСЏР±РёР·РЅРµСЃР°','Р°РІС‚РѕРІРѕСЂРѕРЅРєР°','СЃРёСЃС‚РµРјР°РїСЂРѕРґР°Р¶','Р±РёР·РЅРµСЃСЃРёСЃС‚РµРјР°','С‚РµР»РµРіСЂР°РјР±РѕС‚','Р±РѕС‚РґР»СЏР±РёР·РЅРµСЃР°','Р±РѕС‚Р·Р°РїРёСЃРё','РѕС€РёР±РєРёР±РёР·РЅРµСЃР°','Р±РёР·РЅРµСЃРѕРЅР»Р°Р№РЅ','webdesign','webdevelopment','landingpage','salesfunnel','highconvertingwebsite','leadgeneration','getclients','clientacquisition','makemoneyonline','onlinebusiness','businessautomation','marketingautomation','salesautomation','funnelbuilder','chatbot','telegrambot','aiautomation','digitalmarketingtips','businesshacks','marketingstrategy']}}];"
+      }
+    },
+    {
+      "id": "apify-run-01",
+      "name": "рџ•· Apify: Р·Р°РїСѓСЃРє РїР°СЂСЃРёРЅРіР°",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [512, 304],
+      "parameters": {
+        "url": "https://api.apify.com/v2/acts/apify~instagram-hashtag-scraper/runs?token=APIFY_API_TOKEN&waitForFinish=600",
+        "method": "POST",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [{"name": "Content-Type", "value": "application/json"}]
+        },
+        "sendBody": true,
+        "contentType": "raw",
+        "rawContentType": "application/json",
+        "body": "={{ JSON.stringify({hashtags: $json.hashtags, resultsLimit: 30, searchType: 'recent'}) }}"
+      }
+    },
+    {
+      "id": "apify-dataset-01",
+      "name": "рџ“Ґ Apify: РїРѕР»СѓС‡РёС‚СЊ СЂРµР·СѓР»СЊС‚Р°С‚С‹",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [752, 304],
+      "parameters": {
+        "url": "=https://api.apify.com/v2/datasets/{{ $json.data.defaultDatasetId }}/items?token=APIFY_API_TOKEN&format=json&limit=1200",
+        "method": "GET"
+      }
+    },
+    {
+      "id": "filter-01",
+      "name": "рџ“Љ Р¤РёР»СЊС‚СЂ: С‚РѕРї-20% РїРѕ РѕС…РІР°С‚Сѓ",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1008, 304],
+      "parameters": {
+        "language": "javaScript",
+        "mode": "runOnceForAllItems",
+        "jsCode": "var raw = $input.first().json;\nvar posts = Array.isArray(raw) ? raw : [raw];\nvar videoOnly = posts.filter(function(p) { return p.videoUrl && (p.videoViewCount || p.likesCount); });\nvar normalized = videoOnly.map(function(p) {\n  return {\n    shortCode: p.shortCode || p.id || String(Date.now() + Math.random()).replace('.',''),\n    url: p.url || ('https://www.instagram.com/p/' + (p.shortCode || '')),\n    username: p.ownerUsername || p.username || '',\n    hashtag: p.hashtag || '',\n    caption: (p.caption || p.text || '').slice(0, 500),\n    displayUrl: p.displayUrl || p.thumbnailUrl || p.previewUrl || '',\n    videoUrl: p.videoUrl || '',\n    views: p.videoViewCount || 0,\n    likes: p.likesCount || 0,\n    followers: p.followersCount || 0,\n    normalized_reach: (p.followersCount > 100)\n      ? Math.round((p.videoViewCount / p.followersCount) * 100)\n      : (p.videoViewCount || 0)\n  };\n});\nnormalized.sort(function(a, b) { return b.normalized_reach - a.normalized_reach; });\nvar count = Math.max(1, Math.ceil(normalized.length * 0.2));\nvar top = normalized.slice(0, count);\nconsole.log('Total: ' + normalized.length + ', Top 20%: ' + top.length);\nreturn top.map(function(p) { return {json: p}; });"
+      }
+    },
+    {
+      "id": "ffmpeg-audio-01",
+      "name": "рџЋ¬ FFmpeg: РёР·РІР»РµС‡СЊ Р°СѓРґРёРѕ",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [1264, 304],
+      "parameters": {
+        "url": "http://85.239.59.252:8003/render",
+        "method": "POST",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [{"name": "Content-Type", "value": "application/json"}]
+        },
+        "sendBody": true,
+        "contentType": "raw",
+        "rawContentType": "application/json",
+        "body": "={{ JSON.stringify({command: 'ffmpeg -i \"' + $json.videoUrl + '\" -vn -ac 1 -ar 16000 -f wav /opt/content/tmp/' + $json.shortCode + '.wav -y', output_path: '/opt/content/tmp/' + $json.shortCode + '.wav'}) }}"
+      }
+    },
+    {
+      "id": "librosa-01",
+      "name": "рџЋµ librosa: BPM + Р¶Р°РЅСЂ + СЌРЅРµСЂРіРµС‚РёРєР°",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [1504, 304],
+      "parameters": {
+        "url": "http://85.239.59.252:8002/analyze",
+        "method": "POST",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [{"name": "Content-Type", "value": "application/json"}]
+        },
+        "sendBody": true,
+        "contentType": "raw",
+        "rawContentType": "application/json",
+        "body": "={{ JSON.stringify({file_path: '/opt/content/tmp/' + $('рџ“Љ Р¤РёР»СЊС‚СЂ: С‚РѕРї-20% РїРѕ РѕС…РІР°С‚Сѓ').item.json.shortCode + '.wav'}) }}"
+      }
+    },
+    {
+      "id": "prepare-vision-01",
+      "name": "рџ“ќ РџРѕРґРіРѕС‚РѕРІРёС‚СЊ Vision Р·Р°РїСЂРѕСЃ",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1750, 300],
+      "parameters": {
+        "language": "javaScript",
+        "jsCode": "var post = $('рџ“Љ Р¤РёР»СЊС‚СЂ: С‚РѕРї-20% РїРѕ РѕС…РІР°С‚Сѓ').item.json;\nvar imgUrl = post.displayUrl || '';\nvar audio = $('рџЋµ librosa: BPM + Р¶Р°РЅСЂ + СЌРЅРµСЂРіРµС‚РёРєР°').item.json;\n\nvar imageContent;\nif (imgUrl) {\n  try {\n    var resp = await fetch(imgUrl, {\n      headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36' }\n    });\n    if (!resp.ok) throw new Error('HTTP ' + resp.status);\n    var buf = await resp.arrayBuffer();\n    var b64 = Buffer.from(buf).toString('base64');\n    var mime = (resp.headers.get('content-type') || 'image/jpeg').split(';')[0];\n    imageContent = { type: 'image_url', image_url: { url: 'data:' + mime + ';base64,' + b64, detail: 'low' } };\n  } catch(e) {\n    imageContent = { type: 'text', text: '[Image unavailable: ' + e.message + ']' };\n  }\n} else {\n  imageContent = { type: 'text', text: '[No image URL]' };\n}\n\nvar body = {\n  model: 'gpt-4o',\n  temperature: 0.2,\n  max_tokens: 300,\n  messages: [{\n    role: 'user',\n    content: [\n      { type: 'text', text: 'Analyse this Instagram post image. Return only valid JSON without markdown. Fields: overlays (text on screen, string), dominant_colors (array of 3 hex strings), visual_style (one of: minimalism, bright, business, lifestyle, infographic), bg_type (one of: solid, gradient, photo, video), mood (one of: motivation, pain, provocation, case, education)' },\n      imageContent\n    ]\n  }]\n};\n\nreturn [{ json: { visionBody: JSON.stringify(body), post: post, audio: audio } }];"
+      }
+    },
+    {
+      "id": "vision-01",
+      "name": "рџ‘Ѓ GPT-4o Vision: OCR + С†РІРµС‚Р°",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [1760, 304],
+      "parameters": {
+        "url": "https://api.openai.com/v1/chat/completions",
+        "method": "POST",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {"name": "Authorization", "value": "Bearer OPENAI_API_KEY"},
+            {"name": "Content-Type", "value": "application/json"}
+          ]
+        },
+        "sendBody": true,
+        "contentType": "raw",
+        "rawContentType": "application/json",
+        "body": "={{ $json.visionBody }}"
+      }
+    },
+    {
+      "id": "build-t3-01",
+      "name": "рџ”Ђ Code: СЃРѕР±СЂР°С‚СЊ РґР°РЅРЅС‹Рµ РґР»СЏ T3",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [2000, 304],
+      "parameters": {
+        "language": "javaScript",
+        "jsCode": "var post = $('рџ“Љ Р¤РёР»СЊС‚СЂ: С‚РѕРї-20% РїРѕ РѕС…РІР°С‚Сѓ').item.json;\nvar audio = $('рџЋµ librosa: BPM + Р¶Р°РЅСЂ + СЌРЅРµСЂРіРµС‚РёРєР°').item.json;\nvar visionRaw = $('рџ‘Ѓ GPT-4o Vision: OCR + С†РІРµС‚Р°').item.json;\n\nvar visionData = {};\ntry {\n  var content = (visionRaw.choices && visionRaw.choices[0] && visionRaw.choices[0].message)\n    ? visionRaw.choices[0].message.content : '{}';\n  content = content.replace(/```[a-z]*\\n?/g, '').replace(/```/g, '').trim();\n  visionData = JSON.parse(content);\n} catch(e) { visionData = {}; }\n\nvar audioData = {\n  bpm: audio.bpm || null,\n  genre: audio.genre || null,\n  energy: audio.energy || null,\n  drop_moment_sec: audio.drop_moment_sec || null\n};\n\nreturn [{json: {\n  url: post.url,\n  username: post.username,\n  hashtag: post.hashtag,\n  transcript: post.caption,\n  overlays: visionData.overlays || '',\n  bpm: audioData.bpm,\n  voice_style: audioData.genre || '',\n  views: post.views,\n  likes: post.likes,\n  followers: post.followers,\n  normalized_reach: post.normalized_reach,\n  visual_style: visionData.visual_style || '',\n  audio_data: JSON.stringify(audioData),\n  patterns: JSON.stringify({\n    mood: visionData.mood || '',\n    bg_type: visionData.bg_type || '',\n    dominant_colors: visionData.dominant_colors || []\n  }),\n  shortCode: post.shortCode\n}}];"
+      }
+    },
+    {
+      "id": "supabase-t3-01",
+      "name": "рџ’ѕ Supabase T3: СЃРѕС…СЂР°РЅРёС‚СЊ РєРѕРЅРєСѓСЂРµРЅС‚Р°",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [2256, 304],
+      "parameters": {
+        "url": "https://jlenlqhudcgkmnxnkguk.supabase.co/rest/v1/competitors",
+        "method": "POST",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {"name": "apikey", "value": "SUPABASE_SECRET_KEY"},
+            {"name": "Authorization", "value": "Bearer SUPABASE_SECRET_KEY"},
+            {"name": "Content-Type", "value": "application/json"},
+            {"name": "Prefer", "value": "return=minimal"}
+          ]
+        },
+        "sendBody": true,
+        "contentType": "raw",
+        "rawContentType": "application/json",
+        "body": "={{ JSON.stringify({url: $json.url, username: $json.username, hashtag: $json.hashtag, transcript: $json.transcript, overlays: $json.overlays, bpm: $json.bpm, voice_style: $json.voice_style, views: $json.views, likes: $json.likes, followers: $json.followers, normalized_reach: $json.normalized_reach, visual_style: $json.visual_style, audio_data: $json.audio_data, patterns: $json.patterns}) }}"
+      }
+    },
+    {
+      "id": "cleanup-01",
+      "name": "рџ—‘ FFmpeg: СѓРґР°Р»РёС‚СЊ Р°СѓРґРёРѕ С„Р°Р№Р»",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [2512, 304],
+      "parameters": {
+        "url": "http://85.239.59.252:8003/render",
+        "method": "POST",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [{"name": "Content-Type", "value": "application/json"}]
+        },
+        "sendBody": true,
+        "contentType": "raw",
+        "rawContentType": "application/json",
+        "body": "={{ JSON.stringify({command: 'rm -f /opt/content/tmp/' + $('рџ”Ђ Code: СЃРѕР±СЂР°С‚СЊ РґР°РЅРЅС‹Рµ РґР»СЏ T3').item.json.shortCode + '.wav', output_path: '/dev/null'}) }}"
+      }
+    }
+  ],
+  "connections": {
+    "вЏ° Schedule: РІРѕСЃРєСЂРµСЃРµРЅСЊРµ 22:00": {
+      "main": [[{"node": "рџ“‹ РЎРїРёСЃРѕРє 40 С…СЌС€С‚РµРіРѕРІ", "type": "main", "index": 0}]]
+    },
+    "рџ“‹ РЎРїРёСЃРѕРє 40 С…СЌС€С‚РµРіРѕРІ": {
+      "main": [[{"node": "рџ•· Apify: Р·Р°РїСѓСЃРє РїР°СЂСЃРёРЅРіР°", "type": "main", "index": 0}]]
+    },
+    "рџ•· Apify: Р·Р°РїСѓСЃРє РїР°СЂСЃРёРЅРіР°": {
+      "main": [[{"node": "рџ“Ґ Apify: РїРѕР»СѓС‡РёС‚СЊ СЂРµР·СѓР»СЊС‚Р°С‚С‹", "type": "main", "index": 0}]]
+    },
+    "рџ“Ґ Apify: РїРѕР»СѓС‡РёС‚СЊ СЂРµР·СѓР»СЊС‚Р°С‚С‹": {
+      "main": [[{"node": "рџ“Љ Р¤РёР»СЊС‚СЂ: С‚РѕРї-20% РїРѕ РѕС…РІР°С‚Сѓ", "type": "main", "index": 0}]]
+    },
+    "рџ“Љ Р¤РёР»СЊС‚СЂ: С‚РѕРї-20% РїРѕ РѕС…РІР°С‚Сѓ": {
+      "main": [[{"node": "рџЋ¬ FFmpeg: РёР·РІР»РµС‡СЊ Р°СѓРґРёРѕ", "type": "main", "index": 0}]]
+    },
+    "рџЋ¬ FFmpeg: РёР·РІР»РµС‡СЊ Р°СѓРґРёРѕ": {
+      "main": [[{"node": "рџЋµ librosa: BPM + Р¶Р°РЅСЂ + СЌРЅРµСЂРіРµС‚РёРєР°", "type": "main", "index": 0}]]
+    },
+    "рџЋµ librosa: BPM + Р¶Р°РЅСЂ + СЌРЅРµСЂРіРµС‚РёРєР°": {
+      "main": [[{"node": "рџ“ќ РџРѕРґРіРѕС‚РѕРІРёС‚СЊ Vision Р·Р°РїСЂРѕСЃ", "type": "main", "index": 0}]]
+    },
+    "рџ“ќ РџРѕРґРіРѕС‚РѕРІРёС‚СЊ Vision Р·Р°РїСЂРѕСЃ": {
+      "main": [[{"node": "рџ‘Ѓ GPT-4o Vision: OCR + С†РІРµС‚Р°", "type": "main", "index": 0}]]
+    },
+    "рџ‘Ѓ GPT-4o Vision: OCR + С†РІРµС‚Р°": {
+      "main": [[{"node": "рџ”Ђ Code: СЃРѕР±СЂР°С‚СЊ РґР°РЅРЅС‹Рµ РґР»СЏ T3", "type": "main", "index": 0}]]
+    },
+    "рџ”Ђ Code: СЃРѕР±СЂР°С‚СЊ РґР°РЅРЅС‹Рµ РґР»СЏ T3": {
+      "main": [[{"node": "рџ’ѕ Supabase T3: СЃРѕС…СЂР°РЅРёС‚СЊ РєРѕРЅРєСѓСЂРµРЅС‚Р°", "type": "main", "index": 0}]]
+    },
+    "рџ’ѕ Supabase T3: СЃРѕС…СЂР°РЅРёС‚СЊ РєРѕРЅРєСѓСЂРµРЅС‚Р°": {
+      "main": [[{"node": "рџ—‘ FFmpeg: СѓРґР°Р»РёС‚СЊ Р°СѓРґРёРѕ С„Р°Р№Р»", "type": "main", "index": 0}]]
+    }
+  },
+  "settings": {"executionOrder": "v1"}
+}
+

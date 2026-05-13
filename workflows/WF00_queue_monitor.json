@@ -1,0 +1,275 @@
+{
+  "name": "00 | Queue Monitor - refill trigger",
+  "active": false,
+  "isArchived": false,
+  "nodes": [
+    {
+      "id": "schedule-00",
+      "name": "Schedule: daily queue check",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [0, 160],
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "50 5 * * *"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "webhook-00",
+      "name": "Webhook: manual queue check",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [0, 360],
+      "parameters": {
+        "path": "wf00-queue-monitor",
+        "httpMethod": "POST",
+        "responseMode": "lastNode"
+      }
+    },
+    {
+      "id": "read-queue-00",
+      "name": "Supabase: read queued Reels",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [300, 240],
+      "parameters": {
+        "url": "https://xxnzqridvepixzireqjh.supabase.co/rest/v1/content_queue?select=id,queue_group,status&status=eq.queued&queue_group=in.(close,premium,viral)",
+        "method": "GET",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "apikey",
+              "value": "SUPABASE_SECRET_KEY"
+            },
+            {
+              "name": "Authorization",
+              "value": "Bearer SUPABASE_SECRET_KEY"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "decide-00",
+      "name": "Code: decide refill",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [860, 240],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "const queuedItems = $('Supabase: read queued Reels').all();\nlet queuedReelsCount = 0;\nif (queuedItems.length === 1 && Array.isArray(queuedItems[0].json)) {\n  queuedReelsCount = queuedItems[0].json.length;\n} else {\n  queuedReelsCount = queuedItems.filter(item => item.json && item.json.id).length;\n}\n\nconst activeItems = $input.all();\nconst activeRows = activeItems.flatMap(item => Array.isArray(item.json) ? item.json : [item.json]).filter(row => row && row.id);\nconst activeBatch = activeRows[0] || null;\n\nconst threshold = 9;\nconst queueLow = queuedReelsCount < threshold;\nconst shouldRefill = queueLow && !activeBatch;\n\nreturn [{\n  json: {\n    queued_reels_count: queuedReelsCount,\n    threshold,\n    active_batch_id: activeBatch?.id || null,\n    active_batch_status: activeBatch?.status || null,\n    should_refill: shouldRefill,\n    target_video_count: 50,\n    platform: 'instagram',\n    reason: shouldRefill\n      ? `Queue low: ${queuedReelsCount}/${threshold} queued Reels and no active batch. Create new competitor batch.`\n      : (activeBatch\n        ? `Queue low/checked, but active batch exists: ${activeBatch.id} (${activeBatch.status}). No duplicate batch.`\n        : `Queue healthy: ${queuedReelsCount}/${threshold} queued Reels. No new batch needed.`)\n  }\n}];"
+      }
+    },
+    {
+      "id": "read-active-batches-00",
+      "name": "Supabase: read active batches",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [580, 240],
+      "parameters": {
+        "url": "https://xxnzqridvepixzireqjh.supabase.co/rest/v1/competitor_batches?select=id,status,created_at&status=in.(started,selection_done,analysis_started)&order=created_at.desc&limit=1",
+        "method": "GET",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "apikey",
+              "value": "SUPABASE_SECRET_KEY"
+            },
+            {
+              "name": "Authorization",
+              "value": "Bearer SUPABASE_SECRET_KEY"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "if-refill-00",
+      "name": "IF: queue below threshold?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [840, 240],
+      "parameters": {
+        "conditions": {
+          "combinator": "and",
+          "conditions": [
+            {
+              "id": "should-refill",
+              "leftValue": "={{ $json.should_refill }}",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "create-batch-00",
+      "name": "Supabase: create competitor batch",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [1120, 120],
+      "parameters": {
+        "url": "https://xxnzqridvepixzireqjh.supabase.co/rest/v1/competitor_batches?select=*",
+        "method": "POST",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "apikey",
+              "value": "SUPABASE_SECRET_KEY"
+            },
+            {
+              "name": "Authorization",
+              "value": "Bearer SUPABASE_SECRET_KEY"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            },
+            {
+              "name": "Prefer",
+              "value": "return=representation"
+            }
+          ]
+        },
+        "sendBody": true,
+        "contentType": "raw",
+        "rawContentType": "application/json",
+        "body": "={{ JSON.stringify({ status: 'started', platform: $json.platform, target_video_count: $json.target_video_count, found_video_count: 0, strict_selected_count: 0, near_threshold_selected_count: 0, final_selected_count: 0, selection_notes: $json.reason }) }}"
+      }
+    },
+    {
+      "id": "batch-created-00",
+      "name": "Code: batch created result",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1400, 120],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "const first = $input.first().json;\nconst batch = Array.isArray(first) ? first[0] : first;\n\nreturn [{\n  json: {\n    action: 'created_batch',\n    batch_id: batch && batch.id,\n    status: batch && batch.status,\n    target_video_count: batch && batch.target_video_count,\n    message: 'WF00 created a new competitor batch. WF01 should process batches with status=started.'\n  }\n}];"
+      }
+    },
+    {
+      "id": "skip-00",
+      "name": "Code: no refill needed",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1120, 360],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "const data = $input.first().json;\nreturn [{\n  json: {\n    action: 'skip_refill',\n    queued_reels_count: data.queued_reels_count,\n    threshold: data.threshold,\n    message: data.reason\n  }\n}];"
+      }
+    }
+  ],
+  "connections": {
+    "Schedule: daily queue check": {
+      "main": [
+        [
+          {
+            "node": "Supabase: read queued Reels",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Webhook: manual queue check": {
+      "main": [
+        [
+          {
+            "node": "Supabase: read queued Reels",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Supabase: read queued Reels": {
+      "main": [
+        [
+          {
+            "node": "Supabase: read active batches",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Supabase: read active batches": {
+      "main": [
+        [
+          {
+            "node": "Code: decide refill",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code: decide refill": {
+      "main": [
+        [
+          {
+            "node": "IF: queue below threshold?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "IF: queue below threshold?": {
+      "main": [
+        [
+          {
+            "node": "Supabase: create competitor batch",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Code: no refill needed",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Supabase: create competitor batch": {
+      "main": [
+        [
+          {
+            "node": "Code: batch created result",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "tags": []
+}
+

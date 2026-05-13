@@ -1,0 +1,375 @@
+{
+  "id": "ndFBmqsdyAnkSrbO",
+  "name": "рџ§  02 | РџР°С‚С‚РµСЂРЅС‹ вЂ” AI РђРіРµРЅС‚",
+  "active": true,
+  "isArchived": false,
+  "nodes": [
+    {
+      "id": "note-02",
+      "name": "рџ“‹ РћРїРёСЃР°РЅРёРµ",
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -200,
+        0
+      ],
+      "disabled": false
+    },
+    {
+      "id": "schedule-02",
+      "name": "вЏ° Schedule: РїРѕСЃР»Рµ Р Р°Р·РІРµРґРєРё",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "position": [
+        0,
+        300
+      ],
+      "disabled": false
+    },
+    {
+      "id": "read-t3-02",
+      "name": "рџ“Ґ Р§РёС‚Р°С‚СЊ T3 competitors",
+      "type": "n8n-nodes-base.httpRequest",
+      "position": [
+        250,
+        300
+      ],
+      "disabled": false
+    },
+    {
+      "id": "agent-02",
+      "name": "рџ“ќ Build prompt",
+      "type": "n8n-nodes-base.code",
+      "position": [
+        500,
+        300
+      ],
+      "disabled": false
+    },
+    {
+      "id": "analyze-text-02",
+      "name": "рџ¤– LLM Р°РЅР°Р»РёР· РїРѕ 5 СЃР»РѕСЏРј",
+      "type": "n8n-nodes-base.httpRequest",
+      "position": [
+        750,
+        300
+      ],
+      "disabled": false
+    },
+    {
+      "id": "analyze-visual-02",
+      "name": "рџ“‹ Parse response",
+      "type": "n8n-nodes-base.code",
+      "position": [
+        1000,
+        300
+      ],
+      "disabled": false
+    },
+    {
+      "id": "if-text-02",
+      "name": "рџ”Ќ IF text patterns exist",
+      "type": "n8n-nodes-base.if",
+      "position": [
+        1250,
+        100
+      ],
+      "disabled": false
+    },
+    {
+      "id": "if-sound-02",
+      "name": "рџ”Ќ IF sound patterns exist",
+      "type": "n8n-nodes-base.if",
+      "position": [
+        1250,
+        250
+      ],
+      "disabled": false
+    },
+    {
+      "id": "if-visual-02",
+      "name": "рџ”Ќ IF visual patterns exist",
+      "type": "n8n-nodes-base.if",
+      "position": [
+        1250,
+        400
+      ],
+      "disabled": false
+    },
+    {
+      "id": "if-forbidden-02",
+      "name": "рџ”Ќ IF forbidden patterns exist",
+      "type": "n8n-nodes-base.if",
+      "position": [
+        1250,
+        550
+      ],
+      "disabled": false
+    },
+    {
+      "id": "prepare-text-02",
+      "name": "рџ“¦ Prepare T1 data",
+      "type": "n8n-nodes-base.code",
+      "position": [
+        1500,
+        50
+      ],
+      "disabled": false
+    },
+    {
+      "id": "prepare-sound-02",
+      "name": "рџ“¦ Prepare T5 data",
+      "type": "n8n-nodes-base.code",
+      "position": [
+        1500,
+        200
+      ],
+      "disabled": false
+    },
+    {
+      "id": "prepare-visual-02",
+      "name": "рџ“¦ Prepare T6 data",
+      "type": "n8n-nodes-base.code",
+      "position": [
+        1500,
+        350
+      ],
+      "disabled": false
+    },
+    {
+      "id": "prepare-forbidden-02",
+      "name": "рџ“¦ Prepare T4 data",
+      "type": "n8n-nodes-base.code",
+      "position": [
+        1500,
+        500
+      ],
+      "disabled": false
+    },
+    {
+      "id": "update-weights-02",
+      "name": "рџ’ѕ UPSERT T1 patterns_weights",
+      "type": "n8n-nodes-base.httpRequest",
+      "position": [
+        1750,
+        50
+      ],
+      "disabled": false
+    },
+    {
+      "id": "save-t5-02",
+      "name": "рџ’ѕ UPSERT T5 sound_patterns",
+      "type": "n8n-nodes-base.httpRequest",
+      "position": [
+        1750,
+        200
+      ],
+      "disabled": false
+    },
+    {
+      "id": "save-t6-02",
+      "name": "рџ’ѕ UPSERT T6 visual_patterns",
+      "type": "n8n-nodes-base.httpRequest",
+      "position": [
+        1750,
+        350
+      ],
+      "disabled": false
+    },
+    {
+      "id": "save-t4-02",
+      "name": "рџ’ѕ INSERT T4 forbidden_patterns",
+      "type": "n8n-nodes-base.httpRequest",
+      "position": [
+        1750,
+        500
+      ],
+      "disabled": false
+    },
+    {
+      "id": "wh-ndFBmqsdyAnkSrbO",
+      "name": "рџ”— Webhook: С‚РµСЃС‚",
+      "type": "n8n-nodes-base.webhook",
+      "position": [
+        0,
+        150
+      ],
+      "disabled": false
+    }
+  ],
+  "connections": {
+    "вЏ° Schedule: РїРѕСЃР»Рµ Р Р°Р·РІРµРґРєРё": {
+      "main": [
+        [
+          {
+            "node": "рџ“Ґ Р§РёС‚Р°С‚СЊ T3 competitors",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "рџ“Ґ Р§РёС‚Р°С‚СЊ T3 competitors": {
+      "main": [
+        [
+          {
+            "node": "рџ“ќ Build prompt",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "рџ“ќ Build prompt": {
+      "main": [
+        [
+          {
+            "node": "рџ¤– LLM Р°РЅР°Р»РёР· РїРѕ 5 СЃР»РѕСЏРј",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "рџ¤– LLM Р°РЅР°Р»РёР· РїРѕ 5 СЃР»РѕСЏРј": {
+      "main": [
+        [
+          {
+            "node": "рџ“‹ Parse response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "рџ“‹ Parse response": {
+      "main": [
+        [
+          {
+            "node": "рџ”Ќ IF text patterns exist",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "рџ”Ќ IF sound patterns exist",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "рџ”Ќ IF visual patterns exist",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "рџ”Ќ IF forbidden patterns exist",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "рџ”Ќ IF text patterns exist": {
+      "main": [
+        [
+          {
+            "node": "рџ“¦ Prepare T1 data",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        []
+      ]
+    },
+    "рџ”Ќ IF sound patterns exist": {
+      "main": [
+        [
+          {
+            "node": "рџ“¦ Prepare T5 data",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        []
+      ]
+    },
+    "рџ”Ќ IF visual patterns exist": {
+      "main": [
+        [
+          {
+            "node": "рџ“¦ Prepare T6 data",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        []
+      ]
+    },
+    "рџ”Ќ IF forbidden patterns exist": {
+      "main": [
+        [
+          {
+            "node": "рџ“¦ Prepare T4 data",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        []
+      ]
+    },
+    "рџ“¦ Prepare T1 data": {
+      "main": [
+        [
+          {
+            "node": "рџ’ѕ UPSERT T1 patterns_weights",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "рџ“¦ Prepare T5 data": {
+      "main": [
+        [
+          {
+            "node": "рџ’ѕ UPSERT T5 sound_patterns",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "рџ“¦ Prepare T6 data": {
+      "main": [
+        [
+          {
+            "node": "рџ’ѕ UPSERT T6 visual_patterns",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "рџ“¦ Prepare T4 data": {
+      "main": [
+        [
+          {
+            "node": "рџ’ѕ INSERT T4 forbidden_patterns",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "рџ”— Webhook: С‚РµСЃС‚": {
+      "main": [
+        [
+          {
+            "node": "рџ“Ґ Р§РёС‚Р°С‚СЊ T3 competitors",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "nodeCount": 19,
+  "connectionCount": 14
+}

@@ -1,0 +1,337 @@
+{
+  "id": "NQRIRMhgVQb8OxV2",
+  "name": "05 | Delivery Telegram",
+  "active": true,
+  "nodes": [
+    {
+      "id": "sch-05",
+      "name": "Schedule: deliver package",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        0,
+        180
+      ],
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "30 9 * * *"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "wh-05",
+      "name": "Webhook: manual WF05",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        0,
+        380
+      ],
+      "parameters": {
+        "path": "wf05-deliver-package",
+        "httpMethod": "POST",
+        "responseMode": "lastNode"
+      },
+      "webhookId": "wf05-deliver-package"
+    },
+    {
+      "id": "readp-05",
+      "name": "Supabase: read ready package",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        300,
+        280
+      ],
+      "parameters": {
+        "url": "https://xxnzqridvepixzireqjh.supabase.co/rest/v1/daily_packages?select=*&status=eq.ready&order=package_date.asc&limit=1",
+        "method": "GET",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "apikey",
+              "value": "<SUPABASE_SERVICE_ROLE_KEY>"
+            },
+            {
+              "name": "Authorization",
+              "value": "Bearer <SUPABASE_SERVICE_ROLE_KEY>"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        }
+      },
+      "alwaysOutputData": true
+    },
+    {
+      "id": "pickp-05",
+      "name": "Code: pick ready package",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        580,
+        280
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "const rows = $input.all().flatMap(i => Array.isArray(i.json) ? i.json : [i.json]).filter(r => r && r.id);\nif (!rows.length) return [{ json: { has_package: false, action: 'skip', message: 'No ready packages to deliver.' } }];\nreturn [{ json: { has_package: true, package: rows[0] } }];"
+      }
+    },
+    {
+      "id": "if-05",
+      "name": "IF: has package?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        860,
+        280
+      ],
+      "parameters": {
+        "conditions": {
+          "combinator": "and",
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "has_package",
+              "leftValue": "={{ $json.has_package }}",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "reada-05",
+      "name": "Supabase: read package assets",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        1140,
+        140
+      ],
+      "parameters": {
+        "url": "={{ 'https://xxnzqridvepixzireqjh.supabase.co/rest/v1/package_assets?select=*&daily_package_id=eq.' + $json.package.id + '&asset_type=in.(reel_close,reel_premium,reel_viral,story)&order=created_at.asc' }}",
+        "method": "GET",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "apikey",
+              "value": "<SUPABASE_SERVICE_ROLE_KEY>"
+            },
+            {
+              "name": "Authorization",
+              "value": "Bearer <SUPABASE_SERVICE_ROLE_KEY>"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        }
+      },
+      "alwaysOutputData": true
+    },
+    {
+      "id": "send-05",
+      "name": "Code: send Telegram videos",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1420,
+        140
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "const token = \"8646017601:AAH4C_nIHvnYqqdBWXVp_BJYxTbQ609nJ4Q\";\nconst chatId = \"1347534574\";\nconst pkg = $('Code: pick ready package').first().json.package;\nconst assets = $input.all().flatMap(i => Array.isArray(i.json) ? i.json : [i.json]).filter(a => a && a.id);\nconst order = ['reel_close', 'reel_premium', 'reel_viral', 'story'];\nconst label = { reel_close: 'Reel 1 - close pattern', reel_premium: 'Reel 2 - premium', reel_viral: 'Reel 3 - viral', story: 'Story' };\nconst videos = assets.filter(a => order.includes(a.asset_type)).sort((a, b) => order.indexOf(a.asset_type) - order.indexOf(b.asset_type));\nconst sent = [];\nconst failed = [];\n\nasync function tg(method, body) {\n  return await $helpers.httpRequest({\n    method: 'POST',\n    url: 'https://api.telegram.org/bot<TELEGRAM_BOT_TOKEN>/' + method,\n    headers: { 'Content-Type': 'application/json' },\n    body,\n    json: true,\n  });\n}\n\nfor (const asset of videos) {\n  const url = asset.storage_url || (String(asset.file_path || '').startsWith('http') ? asset.file_path : '');\n  const caption = [label[asset.asset_type] || asset.asset_type, asset.caption || '', asset.cta ? 'CTA: ' + asset.cta : '']\n    .filter(Boolean)\n    .join('\\n\\n')\n    .slice(0, 1000);\n  if (!url) {\n    failed.push({ id: asset.id, asset_type: asset.asset_type, reason: 'No public URL in storage_url/file_path' });\n    continue;\n  }\n  try {\n    await tg('sendVideo', { chat_id: chatId, video: url, caption, supports_streaming: true });\n    sent.push({ id: asset.id, asset_type: asset.asset_type, url });\n  } catch (e) {\n    failed.push({ id: asset.id, asset_type: asset.asset_type, url, reason: e.message || String(e) });\n  }\n}\n\nconst captionLines = videos.map(asset =>\n  [label[asset.asset_type] || asset.asset_type, asset.caption ? 'Caption: ' + asset.caption : '', asset.cta ? 'CTA: ' + asset.cta : '']\n    .filter(Boolean)\n    .join('\\n')\n);\nconst summary = ['Package ready: ' + (pkg.package_date || pkg.id), '', ...captionLines, '', 'Reply: published 1 2 3, revise second, all ok, send links again.']\n  .join('\\n\\n')\n  .slice(0, 3900);\nawait tg('sendMessage', { chat_id: chatId, text: summary });\nif (failed.length) {\n  await tg('sendMessage', { chat_id: chatId, text: 'Some videos failed: ' + failed.map(f => f.asset_type + ': ' + f.reason).join('; ').slice(0, 3200) });\n}\n\nreturn [{ json: { package_id: pkg.id, sent_count: sent.length, failed_count: failed.length, sent, failed } }];"
+      }
+    },
+    {
+      "id": "patchp-05",
+      "name": "Supabase: mark delivered",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        1700,
+        140
+      ],
+      "parameters": {
+        "url": "={{ 'https://xxnzqridvepixzireqjh.supabase.co/rest/v1/daily_packages?id=eq.' + $json.package_id }}",
+        "method": "PATCH",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "apikey",
+              "value": "<SUPABASE_SERVICE_ROLE_KEY>"
+            },
+            {
+              "name": "Authorization",
+              "value": "Bearer <SUPABASE_SERVICE_ROLE_KEY>"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            },
+            {
+              "name": "Prefer",
+              "value": "return=representation"
+            }
+          ]
+        },
+        "sendBody": true,
+        "contentType": "raw",
+        "rawContentType": "application/json",
+        "body": "={{ JSON.stringify({status:'delivered',delivered_at:new Date().toISOString(),updated_at:new Date().toISOString()}) }}"
+      }
+    },
+    {
+      "id": "done-05",
+      "name": "Code: delivery result",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1980,
+        140
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "return [{ json: { action: 'delivered', message: 'Package videos sent to Telegram and package marked delivered.' } }];"
+      }
+    },
+    {
+      "id": "skip-05",
+      "name": "Code: no ready package",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1140,
+        420
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "return [{ json: { action: 'skip', message: 'No ready packages to deliver.' } }];"
+      }
+    }
+  ],
+  "connections": {
+    "Schedule: deliver package": {
+      "main": [
+        [
+          {
+            "node": "Supabase: read ready package",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Webhook: manual WF05": {
+      "main": [
+        [
+          {
+            "node": "Supabase: read ready package",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Supabase: read ready package": {
+      "main": [
+        [
+          {
+            "node": "Code: pick ready package",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code: pick ready package": {
+      "main": [
+        [
+          {
+            "node": "IF: has package?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "IF: has package?": {
+      "main": [
+        [
+          {
+            "node": "Supabase: read package assets",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Code: no ready package",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Supabase: read package assets": {
+      "main": [
+        [
+          {
+            "node": "Code: send Telegram videos",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code: send Telegram videos": {
+      "main": [
+        [
+          {
+            "node": "Supabase: mark delivered",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Supabase: mark delivered": {
+      "main": [
+        [
+          {
+            "node": "Code: delivery result",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "callerPolicy": "workflowsFromSameOwner",
+    "availableInMCP": false
+  },
+  "exportedAt": "2026-05-13T17:47:56.614Z"
+}

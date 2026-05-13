@@ -1,0 +1,445 @@
+{
+  "id": "kybtRVyiUkrgnwzT",
+  "name": "04 | Daily Package Builder",
+  "active": true,
+  "nodes": [
+    {
+      "id": "sch-04",
+      "name": "Schedule: build daily package",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        0,
+        180
+      ],
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "0 9 * * *"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "wh-04",
+      "name": "Webhook: manual WF04",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        0,
+        380
+      ],
+      "parameters": {
+        "path": "wf04-build-package",
+        "httpMethod": "POST",
+        "responseMode": "lastNode"
+      },
+      "webhookId": "32e21ca1-3077-4b9a-bae0-add6f6226f50"
+    },
+    {
+      "id": "readq-04",
+      "name": "Supabase: read queued items",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        300,
+        280
+      ],
+      "parameters": {
+        "url": "https://xxnzqridvepixzireqjh.supabase.co/rest/v1/content_queue?select=*,content_variants(*)&status=eq.queued&order=priority_score.desc&limit=80",
+        "method": "GET",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "apikey",
+              "value": "<SUPABASE_SERVICE_ROLE_KEY>"
+            },
+            {
+              "name": "Authorization",
+              "value": "Bearer <SUPABASE_SERVICE_ROLE_KEY>"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        }
+      },
+      "alwaysOutputData": true
+    },
+    {
+      "id": "build-04",
+      "name": "Code: build package rows",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        580,
+        280
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "const rows = $input.all().flatMap(i => Array.isArray(i.json) ? i.json : [i.json]).filter(r => r && r.id);\nconst pick = g => rows.filter(r => r.queue_group === g)[0];\nconst close = pick('close');\nconst premium = pick('premium');\nconst viral = pick('viral');\nconst story = pick('story');\nif (!close || !premium || !viral || !story) {\n  return [{ json: { ok: false, action: 'skip', message: 'Not enough queued items for daily package.' } }];\n}\nconst today = new Date().toISOString().slice(0, 10);\nconst q = [close, premium, viral, story];\nconst cta = [close, premium, viral].map(x => x.content_variants?.cta).filter(Boolean)[0] || '???пїЅ?????????,?пїЅ ?? ???????пїЅ???,, ???,???пїЅ?< ???пїЅ???пїЅ?,?? ???пїЅ???? ?? ??????????.';\nconst pkg = {\n  package_date: today,\n  status: 'in_production',\n  reel_close_queue_id: close.id,\n  reel_premium_queue_id: premium.id,\n  reel_viral_queue_id: viral.id,\n  story_queue_id: story.id,\n  cta,\n  selection_notes: 'Auto package: close + premium + viral + story. Assets are render specs until WF04 render implementation fills final files.',\n  score_breakdown_json: Object.fromEntries(q.map(x => [x.queue_group, { priority: x.priority_score, virality: x.virality_score, premium: x.premium_score, similarity: x.similarity_score }])),\n  source_refs_json: q.map(x => ({ queue_id: x.id, variant_id: x.content_variant_id, pattern_id: x.content_variants?.content_pattern_id }))\n};\nreturn [{ json: { ok: true, pkg, queue_ids: q.map(x => x.id), items: { close, premium, viral, story } } }];"
+      }
+    },
+    {
+      "id": "if-04",
+      "name": "IF: can build package?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        860,
+        280
+      ],
+      "parameters": {
+        "conditions": {
+          "combinator": "and",
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "ok",
+              "leftValue": "={{ $json.ok }}",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "insertpkg-04",
+      "name": "Supabase: insert daily package",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        1140,
+        140
+      ],
+      "parameters": {
+        "url": "https://xxnzqridvepixzireqjh.supabase.co/rest/v1/daily_packages",
+        "method": "POST",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "apikey",
+              "value": "<SUPABASE_SERVICE_ROLE_KEY>"
+            },
+            {
+              "name": "Authorization",
+              "value": "Bearer <SUPABASE_SERVICE_ROLE_KEY>"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            },
+            {
+              "name": "Prefer",
+              "value": "return=representation"
+            }
+          ]
+        },
+        "sendBody": true,
+        "contentType": "raw",
+        "rawContentType": "application/json",
+        "body": "={{ JSON.stringify($json.pkg) }}"
+      }
+    },
+    {
+      "id": "assets-04",
+      "name": "Code: build package assets",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1420,
+        140
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "const pkg=Array.isArray($input.first().json)?$input.first().json[0]:$input.first().json;const src=$('Code: build package rows').item.json;const map={close:'reel_close',premium:'reel_premium',viral:'reel_viral',story:'story'};const now=new Date().toISOString();const rows=Object.entries(src.items).map(([g,q])=>({daily_package_id:pkg.id,content_queue_id:q.id,asset_type:map[g],file_path:'/content-factory/packages/'+pkg.package_date+'/'+map[g]+'.mp4',storage_url:null,thumbnail_url:null,duration_seconds:null,resolution:'1080x1920',production_mode:q.production_mode,render_tool:q.production_mode==='ai_video'?'polza_sora_2':(q.production_mode==='story_template'?'playwright':'hybrid'),ai_video_model:q.production_mode==='ai_video'?'openai/sora-2':null,image_model:'openai/gpt-image-1.5',music_source:'competitor_pattern_or_library',caption:q.content_variants?.caption||'',cta:q.content_variants?.cta||src.pkg.cta,qc_status:'pending',qc_notes:'Production spec created; render endpoint/media generation must fill final file.',created_at:now,updated_at:now}));rows.push({daily_package_id:pkg.id,asset_type:'metadata',file_path:'/content-factory/packages/'+pkg.package_date+'/metadata.json',caption:JSON.stringify(src.pkg),cta:src.pkg.cta,qc_status:'pending',created_at:now,updated_at:now});return[{json:{pkg,queue_ids:src.queue_ids,assets:rows}}];"
+      }
+    },
+    {
+      "id": "insertassets-04",
+      "name": "Supabase: insert package assets",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        1700,
+        140
+      ],
+      "parameters": {
+        "url": "https://xxnzqridvepixzireqjh.supabase.co/rest/v1/package_assets",
+        "method": "POST",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "apikey",
+              "value": "<SUPABASE_SERVICE_ROLE_KEY>"
+            },
+            {
+              "name": "Authorization",
+              "value": "Bearer <SUPABASE_SERVICE_ROLE_KEY>"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            },
+            {
+              "name": "Prefer",
+              "value": "return=representation"
+            }
+          ]
+        },
+        "sendBody": true,
+        "contentType": "raw",
+        "rawContentType": "application/json",
+        "body": "={{ JSON.stringify($json.assets) }}"
+      }
+    },
+    {
+      "id": "patchpkg-04",
+      "name": "Supabase: mark package ready",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        1980,
+        140
+      ],
+      "parameters": {
+        "url": "={{ 'https://xxnzqridvepixzireqjh.supabase.co/rest/v1/daily_packages?id=eq.' + $('Code: build package assets').item.json.pkg.id }}",
+        "method": "PATCH",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "apikey",
+              "value": "<SUPABASE_SERVICE_ROLE_KEY>"
+            },
+            {
+              "name": "Authorization",
+              "value": "Bearer <SUPABASE_SERVICE_ROLE_KEY>"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            },
+            {
+              "name": "Prefer",
+              "value": "return=representation"
+            }
+          ]
+        },
+        "sendBody": true,
+        "contentType": "raw",
+        "rawContentType": "application/json",
+        "body": "={{ JSON.stringify({status:'in_production',updated_at:new Date().toISOString()}) }}"
+      }
+    },
+    {
+      "id": "patchq-04",
+      "name": "Supabase: mark queue produced",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        2260,
+        140
+      ],
+      "parameters": {
+        "url": "={{ 'https://xxnzqridvepixzireqjh.supabase.co/rest/v1/content_queue?id=in.(' + $('Code: build package assets').item.json.queue_ids.join(',') + ')' }}",
+        "method": "PATCH",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "apikey",
+              "value": "<SUPABASE_SERVICE_ROLE_KEY>"
+            },
+            {
+              "name": "Authorization",
+              "value": "Bearer <SUPABASE_SERVICE_ROLE_KEY>"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            },
+            {
+              "name": "Prefer",
+              "value": "return=representation"
+            }
+          ]
+        },
+        "sendBody": true,
+        "contentType": "raw",
+        "rawContentType": "application/json",
+        "body": "={{ JSON.stringify({status:'produced',produced_at:new Date().toISOString(),updated_at:new Date().toISOString()}) }}"
+      }
+    },
+    {
+      "id": "done-04",
+      "name": "Code: package result",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2540,
+        140
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "return[{json:{action:'package_ready',message:'WF04 created daily package and package_assets.'}}];"
+      }
+    },
+    {
+      "id": "skip-04",
+      "name": "Code: not enough queue",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1140,
+        420
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "return[{json:{action:'skip',message:'Not enough queued items: need close, premium, viral, story.'}}];"
+      }
+    }
+  ],
+  "connections": {
+    "Schedule: build daily package": {
+      "main": [
+        [
+          {
+            "node": "Supabase: read queued items",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Webhook: manual WF04": {
+      "main": [
+        [
+          {
+            "node": "Supabase: read queued items",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Supabase: read queued items": {
+      "main": [
+        [
+          {
+            "node": "Code: build package rows",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code: build package rows": {
+      "main": [
+        [
+          {
+            "node": "IF: can build package?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "IF: can build package?": {
+      "main": [
+        [
+          {
+            "node": "Supabase: insert daily package",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Code: not enough queue",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Supabase: insert daily package": {
+      "main": [
+        [
+          {
+            "node": "Code: build package assets",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code: build package assets": {
+      "main": [
+        [
+          {
+            "node": "Supabase: insert package assets",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Supabase: insert package assets": {
+      "main": [
+        [
+          {
+            "node": "Supabase: mark package ready",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Supabase: mark package ready": {
+      "main": [
+        [
+          {
+            "node": "Supabase: mark queue produced",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Supabase: mark queue produced": {
+      "main": [
+        [
+          {
+            "node": "Code: package result",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "callerPolicy": "workflowsFromSameOwner",
+    "availableInMCP": false
+  },
+  "versionId": "c1e0e4b3-13e3-4366-9556-36484d1b8ef5",
+  "exportedAt": "2026-05-13T17:34:40.374Z"
+}

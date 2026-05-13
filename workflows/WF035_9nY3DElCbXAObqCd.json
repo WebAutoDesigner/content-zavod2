@@ -1,0 +1,193 @@
+{
+  "id": "9nY3DElCbXAObqCd",
+  "name": "03.5 | РћС†РµРЅРєР° Рё РћС‚Р±РѕСЂ вЂ” AI РђРіРµРЅС‚",
+  "nodes": [
+    {
+      "id": "webhook-035",
+      "name": "Webhook: С‚РµСЃС‚",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [0, -80],
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "wf035-trigger",
+        "responseMode": "onReceived",
+        "options": {}
+      }
+    },
+    {
+      "id": "trigger-035",
+      "name": "РџРѕР»СѓС‡РёС‚СЊ РёРґРµРё РѕС‚ WF03",
+      "type": "n8n-nodes-base.executeWorkflowTrigger",
+      "typeVersion": 1,
+      "position": [0, 60],
+      "parameters": {}
+    },
+    {
+      "id": "read-t7-035",
+      "name": "Р§РёС‚Р°С‚СЊ РёРґРµРё РёР· T7",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [200, 60],
+      "parameters": {
+        "url": "https://jlenlqhudcgkmnxnkguk.supabase.co/rest/v1/agent_memory?select=*&order=created_at.desc&limit=15",
+        "method": "GET",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {"name": "apikey", "value": "SUPABASE_SECRET_KEY"},
+            {"name": "Authorization", "value": "Bearer SUPABASE_SECRET_KEY"}
+          ]
+        }
+      }
+    },
+    {
+      "id": "extract-035",
+      "name": "РР·РІР»РµС‡СЊ 15 РёРґРµР№",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [400, 60],
+      "parameters": {
+        "jsCode": "const items = $input.all();\nconst ideas = items.map(i => i.json);\nif (!ideas || ideas.length === 0) {\n  return [{json: {ideas: [], count: 0}}];\n}\nreturn [{json: {ideas: ideas, count: ideas.length}}];"
+      }
+    },
+    {
+      "id": "if-ideas-035",
+      "name": "Р•СЃС‚СЊ РёРґРµРё?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [600, 60],
+      "parameters": {
+        "conditions": {
+          "combinator": "and",
+          "conditions": [
+            {
+              "id": "c1",
+              "leftValue": "={{ $json.count }}",
+              "operator": {"type": "number", "operation": "gt"},
+              "rightValue": 0
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "llm-score-035",
+      "name": "LLM СЃРєРѕСЂРёРЅРі: 15 РёРґРµР№",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [800, 60],
+      "parameters": {
+        "url": "https://polza.ai/api/v1/chat/completions",
+        "method": "POST",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {"name": "Authorization", "value": "Bearer POLZA_API_KEY"},
+            {"name": "Content-Type", "value": "application/json"}
+          ]
+        },
+        "sendBody": true,
+        "contentType": "raw",
+        "rawContentType": "application/json",
+        "body": "={\"model\": \"google/gemini-2.5-flash-lite\", \"messages\": [{\"role\": \"system\", \"content\": \"РўС‹ РѕС†РµРЅРёРІР°РµС€СЊ РёРґРµРё РєРѕРЅС‚РµРЅС‚Р° РґР»СЏ РєР°РЅР°Р»Р° Р‘РёР·РЅРµСЃ РЅР° Р°РІС‚РѕРїРёР»РѕС‚Рµ (Р°СѓРґРёС‚РѕСЂРёСЏ: РІР»Р°РґРµР»СЊС†С‹ РјР°Р»РѕРіРѕ Р±РёР·РЅРµСЃР° Р Р¤ 25-45 Р»РµС‚). РћС†РµРЅРё РєР°Р¶РґСѓСЋ РёРґРµСЋ РїРѕ 5 РєСЂРёС‚РµСЂРёСЏРј (0-10): hook_strength, pattern_match, virality, product_relevance, uniqueness. Р”РѕР±Р°РІСЊ total (СЃСѓРјРјР°). Р’РµСЂРЅРё JSON РјР°СЃСЃРёРІ РІСЃРµС… РёРґРµР№ СЃ РѕС†РµРЅРєР°РјРё. РўРѕР»СЊРєРѕ JSON Р±РµР· markdown.\"}, {\"role\": \"user\", \"content\": \"РћС†РµРЅРё РёРґРµРё: {{ JSON.stringify($json.ideas) }}\"}], \"temperature\": 0.1}",
+        "options": {}
+      }
+    },
+    {
+      "id": "pick-top3-035",
+      "name": "Р’С‹Р±СЂР°С‚СЊ С‚РѕРї-3",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1000, 60],
+      "parameters": {
+        "jsCode": "const raw = $json.choices[0].message.content;\nlet ideas;\ntry {\n  ideas = JSON.parse(raw);\n} catch(e) {\n  const match = raw.match(/\\[.*\\]/s);\n  if (!match) throw new Error('Cannot parse LLM response: ' + raw.substring(0, 200));\n  ideas = JSON.parse(match[0]);\n}\nideas.sort((a,b) => (b.scores?.total || b.total || 0) - (a.scores?.total || a.total || 0));\nconst reel = ideas.find(i => i.format === 'Reel');\nconst post = ideas.find(i => i.format === 'Post');\nconst story = ideas.find(i => i.format === 'Story');\nconst top3 = [reel, post, story].filter(Boolean);\nif (top3.length < 3) {\n  for (const idea of ideas) {\n    if (top3.length >= 3) break;\n    if (!top3.includes(idea)) top3.push(idea);\n  }\n}\nreturn [{json: {top3, parsed_ok: true}}];"
+      }
+    },
+    {
+      "id": "if-parsed-035",
+      "name": "РџР°СЂСЃРёРЅРі СѓСЃРїРµС€РµРЅ?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [1200, 60],
+      "parameters": {
+        "conditions": {
+          "combinator": "and",
+          "conditions": [
+            {
+              "id": "c1",
+              "leftValue": "={{ $json.parsed_ok }}",
+              "operator": {"type": "boolean", "operation": "true"}
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "save-t2-035",
+      "name": "РЎРѕС…СЂР°РЅРёС‚СЊ С‚РѕРї-3 РІ T2",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [1400, 60],
+      "parameters": {
+        "url": "https://jlenlqhudcgkmnxnkguk.supabase.co/rest/v1/my_content",
+        "method": "POST",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {"name": "apikey", "value": "SUPABASE_SECRET_KEY"},
+            {"name": "Authorization", "value": "Bearer SUPABASE_SECRET_KEY"},
+            {"name": "Content-Type", "value": "application/json"},
+            {"name": "Prefer", "value": "return=representation"}
+          ]
+        },
+        "sendBody": true,
+        "contentType": "raw",
+        "rawContentType": "application/json",
+        "body": "={{ JSON.stringify($json.top3.map(idea => ({format: idea.format, hook: idea.hook, topic: idea.topic, product: idea.product, visual_style: idea.visual_style || '', sound_mood: idea.sound_mood || '', status: 'queued', scores: idea.scores || {}}))) }}"
+      }
+    },
+    {
+      "id": "run-wf04-035",
+      "name": "Р—Р°РїСѓСЃС‚РёС‚СЊ WF04",
+      "type": "n8n-nodes-base.executeWorkflow",
+      "typeVersion": 1,
+      "position": [1600, 60],
+      "parameters": {
+        "workflowId": "DB6h9VuJPhCS5EEq",
+        "mode": "once"
+      }
+    }
+  ],
+  "connections": {
+    "Webhook: С‚РµСЃС‚": {
+      "main": [[{"node": "Р§РёС‚Р°С‚СЊ РёРґРµРё РёР· T7", "type": "main", "index": 0}]]
+    },
+    "РџРѕР»СѓС‡РёС‚СЊ РёРґРµРё РѕС‚ WF03": {
+      "main": [[{"node": "Р§РёС‚Р°С‚СЊ РёРґРµРё РёР· T7", "type": "main", "index": 0}]]
+    },
+    "Р§РёС‚Р°С‚СЊ РёРґРµРё РёР· T7": {
+      "main": [[{"node": "РР·РІР»РµС‡СЊ 15 РёРґРµР№", "type": "main", "index": 0}]]
+    },
+    "РР·РІР»РµС‡СЊ 15 РёРґРµР№": {
+      "main": [[{"node": "Р•СЃС‚СЊ РёРґРµРё?", "type": "main", "index": 0}]]
+    },
+    "Р•СЃС‚СЊ РёРґРµРё?": {
+      "main": [[{"node": "LLM СЃРєРѕСЂРёРЅРі: 15 РёРґРµР№", "type": "main", "index": 0}], []]
+    },
+    "LLM СЃРєРѕСЂРёРЅРі: 15 РёРґРµР№": {
+      "main": [[{"node": "Р’С‹Р±СЂР°С‚СЊ С‚РѕРї-3", "type": "main", "index": 0}]]
+    },
+    "Р’С‹Р±СЂР°С‚СЊ С‚РѕРї-3": {
+      "main": [[{"node": "РџР°СЂСЃРёРЅРі СѓСЃРїРµС€РµРЅ?", "type": "main", "index": 0}]]
+    },
+    "РџР°СЂСЃРёРЅРі СѓСЃРїРµС€РµРЅ?": {
+      "main": [[{"node": "РЎРѕС…СЂР°РЅРёС‚СЊ С‚РѕРї-3 РІ T2", "type": "main", "index": 0}], []]
+    },
+    "РЎРѕС…СЂР°РЅРёС‚СЊ С‚РѕРї-3 РІ T2": {
+      "main": [[{"node": "Р—Р°РїСѓСЃС‚РёС‚СЊ WF04", "type": "main", "index": 0}]]
+    }
+  },
+  "settings": {"executionOrder": "v1"}
+}
+

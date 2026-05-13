@@ -1,0 +1,501 @@
+{
+  "id": "8vhOXr9m472gDHSV",
+  "name": "03.5 | Score And Queue",
+  "active": true,
+  "nodes": [
+    {
+      "id": "sch-035",
+      "name": "Schedule: score variants",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        0,
+        180
+      ],
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "*/30 * * * *"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "wh-035",
+      "name": "Webhook: manual WF03.5",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        0,
+        380
+      ],
+      "parameters": {
+        "path": "wf035-score-queue",
+        "httpMethod": "POST",
+        "responseMode": "lastNode"
+      },
+      "webhookId": "18dbbed5-785a-4cda-bd20-74395a3efdf8"
+    },
+    {
+      "id": "read-035",
+      "name": "Supabase: read idea variants",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        300,
+        280
+      ],
+      "parameters": {
+        "url": "https://xxnzqridvepixzireqjh.supabase.co/rest/v1/content_variants?select=*,content_patterns(*),pattern_recipes(*)&status=eq.idea_created&order=created_at.asc&limit=80",
+        "method": "GET",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "apikey",
+              "value": "<SUPABASE_SERVICE_ROLE_KEY>"
+            },
+            {
+              "name": "Authorization",
+              "value": "Bearer <SUPABASE_SERVICE_ROLE_KEY>"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        }
+      },
+      "alwaysOutputData": true
+    },
+    {
+      "id": "norm-035",
+      "name": "Code: normalize variants",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        580,
+        280
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "const raw = $input.all().flatMap(i => Array.isArray(i.json) ? i.json : [i.json]).filter(v => v && v.id);\nif (!raw.length) return [{ json: { has_variants: false, action: 'skip', message: 'No idea_created variants waiting for WF03.5.' } }];\nconst patternId = raw[0].content_pattern_id;\nconst variants = raw.filter(v => v.content_pattern_id === patternId);\nconst system = [\n  'You are the senior SMM director and viral-content judge for a premium-table content factory.',\n  'Your job is to select content that can get reach, retention, leads and still remain safe and unique.',\n  'Do not choose generic ideas. Penalize weak first frames, vague scenes, no proof, no CTA, copied logos/faces/brand identity, and variants too far from a proven competitor pattern.',\n  'The product is premium custom tables. The user usually has little product material, so production must be realistic with competitor-derived mechanics, overlays, simple render formats, and strong first-frame text.',\n  'Return only valid JSON. Output language for notes: Russian.'\n].join(' ');\nconst schema = {\n  queue: [{\n    variant_id: '',\n    queue_group: 'close|viral|premium|story',\n    priority_score: 0,\n    virality_score: 0,\n    premium_score: 0,\n    similarity_score: 0,\n    first_frame_score: 0,\n    retention_score: 0,\n    lead_score: 0,\n    production_mode: '',\n    selection_reason: '',\n    risk_notes: ''\n  }],\n  caption_variant_ids: [],\n  notes: '',\n  score_breakdown_json: {}\n};\nconst user = [\n  'Choose the daily production queue from the variants.',\n  'Need exactly one close reel, one viral reel, one premium reel, one story, and 3 caption variants.',\n  'Scoring priority: virality first, then similarity to successful pattern, then first frame, retention, lead potential, premium feel, uniqueness/safety.',\n  'For each selected item set production_mode: hybrid, typewriter, result_card, story_template, or ai_video. Use ai_video only if materially better; otherwise prefer renderable hybrid/simple formats.',\n  'Reject/downscore exact copied words, exact frames, third-party logo/faces as key element, weak CTA, unclear product desire, or boring first 1-2 seconds.',\n  'Return JSON matching schema:',\n  JSON.stringify(schema),\n  'Variants:',\n  JSON.stringify(variants)\n].join('\\n');\nreturn [{\n  json: {\n    has_variants: true,\n    pattern_id: patternId,\n    batch_id: variants[0].batch_id,\n    variants,\n    polza_body: {\n      model: 'openai/gpt-5.2',\n      temperature: 0.18,\n      response_format: { type: 'json_object' },\n      messages: [\n        { role: 'system', content: system },\n        { role: 'user', content: user }\n      ]\n    }\n  }\n}];"
+      }
+    },
+    {
+      "id": "if-035",
+      "name": "IF: has variants?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        860,
+        280
+      ],
+      "parameters": {
+        "conditions": {
+          "combinator": "and",
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "ok",
+              "leftValue": "={{ $json.has_variants }}",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "polza-035",
+      "name": "Polza: GPT-5.2 score variants",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "onError": "continueRegularOutput",
+      "position": [
+        1140,
+        140
+      ],
+      "parameters": {
+        "url": "https://polza.ai/api/v1/chat/completions",
+        "method": "POST",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "Bearer <POLZA_API_KEY>"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "contentType": "raw",
+        "rawContentType": "application/json",
+        "body": "={{ JSON.stringify($json.polza_body) }}"
+      }
+    },
+    {
+      "id": "parse-035",
+      "name": "Code: parse queue winners",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1420,
+        140
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "const src = $('Code: normalize variants').item.json;\nconst r = $input.first()?.json || {};\nconst raw = r.choices?.[0]?.message?.content || r.content || '';\nfunction parse(t) {\n  try { return JSON.parse(String(t)); } catch (e) {}\n  const s = String(t || '');\n  return JSON.parse(s.slice(s.indexOf('{'), s.lastIndexOf('}') + 1));\n}\nfunction num(v, d = 50) {\n  v = Number(v);\n  return Number.isFinite(v) ? Math.max(0, Math.min(100, v)) : d;\n}\nlet p;\ntry {\n  p = parse(raw);\n} catch (e) {\n  const by = g => src.variants\n    .filter(v => v.variant_group === g && v.format !== 'caption')\n    .sort((a, b) => String(b.first_frame || '').length - String(a.first_frame || '').length)[0];\n  p = {\n    queue: ['close', 'viral', 'premium', 'story']\n      .map(g => by(g))\n      .filter(Boolean)\n      .map(v => ({\n        variant_id: v.id,\n        queue_group: v.variant_group,\n        priority_score: 70,\n        virality_score: 70,\n        premium_score: 70,\n        similarity_score: 70,\n        first_frame_score: 70,\n        retention_score: 70,\n        lead_score: 70,\n        production_mode: v.variant_group === 'story' ? 'story_template' : 'montage'\n      })),\n    caption_variant_ids: src.variants.filter(v => v.format === 'caption').slice(0, 3).map(v => v.id),\n    notes: 'fallback deterministic selection',\n    score_breakdown_json: { fallback: true }\n  };\n}\nconst now = new Date().toISOString();\nconst rows = (p.queue || []).map((q, i) => ({\n  content_variant_id: q.variant_id,\n  batch_id: src.batch_id,\n  queue_position: i + 1,\n  queue_group: q.queue_group,\n  priority_score: num(q.priority_score),\n  virality_score: num(q.virality_score),\n  premium_score: num(q.premium_score),\n  similarity_score: num(q.similarity_score),\n  first_frame_score: num(q.first_frame_score),\n  retention_score: num(q.retention_score),\n  lead_score: num(q.lead_score),\n  production_mode: q.production_mode || 'montage',\n  status: 'queued',\n  created_at: now,\n  updated_at: now\n}));\nconst ids = [...rows.map(r => r.content_variant_id), ...(p.caption_variant_ids || [])];\nreturn [{ json: { ok: rows.length > 0, pattern_id: src.pattern_id, rows, ids, notes: p.notes || '', score_breakdown_json: p.score_breakdown_json || p } }];"
+      }
+    },
+    {
+      "id": "ifq-035",
+      "name": "IF: queue parsed?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        1700,
+        140
+      ],
+      "parameters": {
+        "conditions": {
+          "combinator": "and",
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "ok",
+              "leftValue": "={{ $json.ok }}",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "insertq-035",
+      "name": "Supabase: insert queue",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        1980,
+        20
+      ],
+      "parameters": {
+        "url": "https://xxnzqridvepixzireqjh.supabase.co/rest/v1/content_queue",
+        "method": "POST",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "apikey",
+              "value": "<SUPABASE_SERVICE_ROLE_KEY>"
+            },
+            {
+              "name": "Authorization",
+              "value": "Bearer <SUPABASE_SERVICE_ROLE_KEY>"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            },
+            {
+              "name": "Prefer",
+              "value": "return=representation"
+            }
+          ]
+        },
+        "sendBody": true,
+        "contentType": "raw",
+        "rawContentType": "application/json",
+        "body": "={{ JSON.stringify($json.rows) }}"
+      }
+    },
+    {
+      "id": "patchv-035",
+      "name": "Supabase: mark variants queued",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        2260,
+        20
+      ],
+      "parameters": {
+        "url": "={{ 'https://xxnzqridvepixzireqjh.supabase.co/rest/v1/content_variants?id=in.(' + $('Code: parse queue winners').item.json.ids.join(',') + ')' }}",
+        "method": "PATCH",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "apikey",
+              "value": "<SUPABASE_SERVICE_ROLE_KEY>"
+            },
+            {
+              "name": "Authorization",
+              "value": "Bearer <SUPABASE_SERVICE_ROLE_KEY>"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            },
+            {
+              "name": "Prefer",
+              "value": "return=representation"
+            }
+          ]
+        },
+        "sendBody": true,
+        "contentType": "raw",
+        "rawContentType": "application/json",
+        "body": "={{ JSON.stringify({status:'queued',updated_at:new Date().toISOString()}) }}"
+      }
+    },
+    {
+      "id": "done-035",
+      "name": "Code: queue result",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2540,
+        20
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "return[{json:{action:'queued',message:'WF03.5 queued selected variants.'}}];"
+      }
+    },
+    {
+      "id": "nov-035",
+      "name": "Code: no variants",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1140,
+        420
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "return[{json:{action:'skip',message:'No variants are waiting for WF03.5.'}}];"
+      }
+    },
+    {
+      "id": "fail-035",
+      "name": "Code: scoring failed",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1980,
+        260
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "return[{json:{action:'scoring_failed',message:'WF03.5 could not parse queue winners.'}}];"
+      }
+    },
+    {
+      "id": "rejectlosers-035",
+      "name": "Supabase: mark losing variants rejected",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        2120,
+        20
+      ],
+      "parameters": {
+        "url": "={{ 'https://xxnzqridvepixzireqjh.supabase.co/rest/v1/content_variants?content_pattern_id=eq.' + $('Code: parse queue winners').item.json.pattern_id + '&status=eq.idea_created' }}",
+        "method": "PATCH",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "apikey",
+              "value": "<SUPABASE_SERVICE_ROLE_KEY>"
+            },
+            {
+              "name": "Authorization",
+              "value": "Bearer <SUPABASE_SERVICE_ROLE_KEY>"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            },
+            {
+              "name": "Prefer",
+              "value": "return=representation"
+            }
+          ]
+        },
+        "sendBody": true,
+        "contentType": "raw",
+        "rawContentType": "application/json",
+        "body": "={{ JSON.stringify({status:'rejected',rejection_reason:'Rejected by WF03.5 scoring; not selected for queue.',updated_at:new Date().toISOString()}) }}"
+      }
+    }
+  ],
+  "connections": {
+    "Schedule: score variants": {
+      "main": [
+        [
+          {
+            "node": "Supabase: read idea variants",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Webhook: manual WF03.5": {
+      "main": [
+        [
+          {
+            "node": "Supabase: read idea variants",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Supabase: read idea variants": {
+      "main": [
+        [
+          {
+            "node": "Code: normalize variants",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code: normalize variants": {
+      "main": [
+        [
+          {
+            "node": "IF: has variants?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "IF: has variants?": {
+      "main": [
+        [
+          {
+            "node": "Polza: GPT-5.2 score variants",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Code: no variants",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Polza: GPT-5.2 score variants": {
+      "main": [
+        [
+          {
+            "node": "Code: parse queue winners",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code: parse queue winners": {
+      "main": [
+        [
+          {
+            "node": "IF: queue parsed?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "IF: queue parsed?": {
+      "main": [
+        [
+          {
+            "node": "Supabase: insert queue",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Code: scoring failed",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Supabase: insert queue": {
+      "main": [
+        [
+          {
+            "node": "Supabase: mark losing variants rejected",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Supabase: mark variants queued": {
+      "main": [
+        [
+          {
+            "node": "Code: queue result",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Supabase: mark losing variants rejected": {
+      "main": [
+        [
+          {
+            "node": "Supabase: mark variants queued",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "callerPolicy": "workflowsFromSameOwner",
+    "availableInMCP": false
+  },
+  "exportedAt": "2026-05-13T18:03:49.524Z"
+}

@@ -1,0 +1,157 @@
+{
+  "id": "xGdY3sEB1QKN72EO",
+  "name": "06 | РђРЅР°Р»РёС‚РёРєР° вЂ” РµР¶РµРґРЅРµРІРЅР°СЏ + РµР¶РµРЅРµРґРµР»СЊРЅС‹Р№ РѕС‚С‡С‘С‚",
+  "notes": "РЎРєРµР»РµС‚ СЃ noOp РЅРѕРґР°РјРё (СЃС‚СЂСѓРєС‚СѓСЂР° РёР· СЃРєСЂРёРЅР° 06.04.2026). Р РµР°Р»РёР·Р°С†РёСЏ вЂ” С‡РµСЂРµР· agent_06.",
+  "nodes": [
+    {
+      "id": "schedule-06",
+      "name": "Schedule: 02:00 РµР¶РµРґРЅРµРІРЅРѕ",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [0, 60],
+      "parameters": {
+        "rule": {"interval": [{"field": "cronExpression", "expression": "0 2 * * *"}]}
+      }
+    },
+    {
+      "id": "instagrapi-06",
+      "name": "Instagrapi :8001: СЃС‚Р°С‚РёСЃС‚РёРєР°",
+      "type": "n8n-nodes-base.noOp",
+      "typeVersion": 1,
+      "position": [200, 60],
+      "parameters": {}
+    },
+    {
+      "id": "tg-stats-06",
+      "name": "Telegram Bot API: СЃС‚Р°С‚РёСЃС‚РёРєР°",
+      "type": "n8n-nodes-base.noOp",
+      "typeVersion": 1,
+      "position": [400, 60],
+      "parameters": {}
+    },
+    {
+      "id": "supabase-read-06",
+      "name": "Supabase: T1 + T2 + РїРѕСЂРѕРі",
+      "type": "n8n-nodes-base.noOp",
+      "typeVersion": 1,
+      "position": [600, 60],
+      "parameters": {}
+    },
+    {
+      "id": "gpt-daily-06",
+      "name": "AI Agent: GPT-4o Р°РЅР°Р»РёР·",
+      "type": "n8n-nodes-base.noOp",
+      "typeVersion": 1,
+      "position": [800, 60],
+      "parameters": {}
+    },
+    {
+      "id": "supabase-update-06",
+      "name": "Supabase: РѕР±РЅРѕРІРёС‚СЊ T1 + T5 + T8",
+      "type": "n8n-nodes-base.noOp",
+      "typeVersion": 1,
+      "position": [1000, 60],
+      "parameters": {}
+    },
+    {
+      "id": "mark-viral-06",
+      "name": "Supabase T2: РїРѕРјРµС‚РёС‚СЊ 'Р·Р°Р»РµС‚РµР»'",
+      "type": "n8n-nodes-base.noOp",
+      "typeVersion": 1,
+      "position": [1200, 60],
+      "parameters": {}
+    },
+    {
+      "id": "if-sunday-06",
+      "name": "IF: РІРѕСЃРєСЂРµСЃРµРЅСЊРµ?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [1400, 60],
+      "parameters": {
+        "conditions": {
+          "combinator": "and",
+          "conditions": [
+            {
+              "id": "c1",
+              "leftValue": "={{ new Date().getDay() }}",
+              "operator": {"type": "number", "operation": "equals"},
+              "rightValue": 0
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "gpt-weekly-06",
+      "name": "GPT-4o: РіР»СѓР±РѕРєРёР№ Р°РЅР°Р»РёР· РЅРµРґРµР»Рё",
+      "type": "n8n-nodes-base.noOp",
+      "typeVersion": 1,
+      "position": [1600, -80],
+      "parameters": {}
+    },
+    {
+      "id": "supabase-t7-06",
+      "name": "Supabase T7: РѕР±РЅРѕРІРёС‚СЊ РїРѕСЂРѕРі",
+      "type": "n8n-nodes-base.noOp",
+      "typeVersion": 1,
+      "position": [1800, -80],
+      "parameters": {}
+    },
+    {
+      "id": "qwen-report-06",
+      "name": "Qwen: С„РѕСЂРјР°С‚РёСЂРѕРІР°С‚СЊ РѕС‚С‡С‘С‚",
+      "type": "n8n-nodes-base.noOp",
+      "typeVersion": 1,
+      "position": [2000, -80],
+      "parameters": {}
+    },
+    {
+      "id": "monitor-06",
+      "name": "Monitor: РѕС‚РїСЂР°РІРёС‚СЊ РѕС‚С‡С‘С‚",
+      "type": "n8n-nodes-base.noOp",
+      "typeVersion": 1,
+      "position": [2200, -80],
+      "parameters": {}
+    }
+  ],
+  "connections": {
+    "Schedule: 02:00 РµР¶РµРґРЅРµРІРЅРѕ": {
+      "main": [[{"node": "Instagrapi :8001: СЃС‚Р°С‚РёСЃС‚РёРєР°", "type": "main", "index": 0}]]
+    },
+    "Instagrapi :8001: СЃС‚Р°С‚РёСЃС‚РёРєР°": {
+      "main": [[{"node": "Telegram Bot API: СЃС‚Р°С‚РёСЃС‚РёРєР°", "type": "main", "index": 0}]]
+    },
+    "Telegram Bot API: СЃС‚Р°С‚РёСЃС‚РёРєР°": {
+      "main": [[{"node": "Supabase: T1 + T2 + РїРѕСЂРѕРі", "type": "main", "index": 0}]]
+    },
+    "Supabase: T1 + T2 + РїРѕСЂРѕРі": {
+      "main": [[{"node": "AI Agent: GPT-4o Р°РЅР°Р»РёР·", "type": "main", "index": 0}]]
+    },
+    "AI Agent: GPT-4o Р°РЅР°Р»РёР·": {
+      "main": [[{"node": "Supabase: РѕР±РЅРѕРІРёС‚СЊ T1 + T5 + T8", "type": "main", "index": 0}]]
+    },
+    "Supabase: РѕР±РЅРѕРІРёС‚СЊ T1 + T5 + T8": {
+      "main": [[{"node": "Supabase T2: РїРѕРјРµС‚РёС‚СЊ 'Р·Р°Р»РµС‚РµР»'", "type": "main", "index": 0}]]
+    },
+    "Supabase T2: РїРѕРјРµС‚РёС‚СЊ 'Р·Р°Р»РµС‚РµР»'": {
+      "main": [[{"node": "IF: РІРѕСЃРєСЂРµСЃРµРЅСЊРµ?", "type": "main", "index": 0}]]
+    },
+    "IF: РІРѕСЃРєСЂРµСЃРµРЅСЊРµ?": {
+      "main": [
+        [{"node": "GPT-4o: РіР»СѓР±РѕРєРёР№ Р°РЅР°Р»РёР· РЅРµРґРµР»Рё", "type": "main", "index": 0}],
+        []
+      ]
+    },
+    "GPT-4o: РіР»СѓР±РѕРєРёР№ Р°РЅР°Р»РёР· РЅРµРґРµР»Рё": {
+      "main": [[{"node": "Supabase T7: РѕР±РЅРѕРІРёС‚СЊ РїРѕСЂРѕРі", "type": "main", "index": 0}]]
+    },
+    "Supabase T7: РѕР±РЅРѕРІРёС‚СЊ РїРѕСЂРѕРі": {
+      "main": [[{"node": "Qwen: С„РѕСЂРјР°С‚РёСЂРѕРІР°С‚СЊ РѕС‚С‡С‘С‚", "type": "main", "index": 0}]]
+    },
+    "Qwen: С„РѕСЂРјР°С‚РёСЂРѕРІР°С‚СЊ РѕС‚С‡С‘С‚": {
+      "main": [[{"node": "Monitor: РѕС‚РїСЂР°РІРёС‚СЊ РѕС‚С‡С‘С‚", "type": "main", "index": 0}]]
+    }
+  },
+  "settings": {"executionOrder": "v1"}
+}
+

@@ -1,0 +1,236 @@
+{
+  "id": "9jevoTflGWFd1INE",
+  "name": "рџ’Ў 03 | Р¤Р°Р±СЂРёРєР° РёРґРµР№ вЂ” AI РђРіРµРЅС‚",
+  "active": false,
+  "isArchived": false,
+  "nodes": [
+    {
+      "id": "note-03",
+      "name": "рџ“‹ РћРїРёСЃР°РЅРёРµ",
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -208,
+        0
+      ],
+      "disabled": false
+    },
+    {
+      "id": "schedule-03",
+      "name": "вЏ° Schedule: 07:00 РµР¶РµРґРЅРµРІРЅРѕ",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "position": [
+        0,
+        304
+      ],
+      "disabled": false
+    },
+    {
+      "id": "read-patterns-03",
+      "name": "рџ“Ґ Supabase: С‡РёС‚Р°С‚СЊ T1 + T5 + T6",
+      "type": "n8n-nodes-base.httpRequest",
+      "position": [
+        256,
+        304
+      ],
+      "disabled": false
+    },
+    {
+      "id": "read-history-03",
+      "name": "рџ“… Supabase T2: РєРѕРЅС‚РµРЅС‚ 7 РґРЅРµР№",
+      "type": "n8n-nodes-base.httpRequest",
+      "position": [
+        656,
+        304
+      ],
+      "disabled": false
+    },
+    {
+      "id": "agent-03",
+      "name": "рџ¤– AI Agent: Gemini Flash РіРµРЅРµСЂРёСЂСѓРµС‚ РёРґРµРё",
+      "type": "n8n-nodes-base.httpRequest",
+      "position": [
+        960,
+        304
+      ],
+      "disabled": false
+    },
+    {
+      "id": "format-ideas-03",
+      "name": "рџ“‹ РЎС‚СЂСѓРєС‚СѓСЂРёСЂРѕРІР°С‚СЊ 15 РёРґРµР№",
+      "type": "n8n-nodes-base.code",
+      "position": [
+        1104,
+        304
+      ],
+      "disabled": false
+    },
+    {
+      "id": "trigger-eval-03",
+      "name": "в–¶пёЏ Р—Р°РїСѓСЃС‚РёС‚СЊ РњРѕРґСѓР»СЊ 03.5 (РћС†РµРЅРєР°)",
+      "type": "n8n-nodes-base.executeWorkflow",
+      "position": [
+        1264,
+        304
+      ],
+      "disabled": false
+    },
+    {
+      "id": "2c7dc9f8-b853-4d08-a592-9a91341419c6",
+      "name": "рџ“Ґ T5: Р·РІСѓРє РїР°С‚С‚РµСЂРЅС‹",
+      "type": "n8n-nodes-base.httpRequest",
+      "position": [
+        256,
+        160
+      ],
+      "disabled": false
+    },
+    {
+      "id": "879db049-99d8-4040-9582-5e1a1dec21fb",
+      "name": "рџ“Ґ T6: РІРёР·СѓР°Р» РїР°С‚С‚РµСЂРЅС‹",
+      "type": "n8n-nodes-base.httpRequest",
+      "position": [
+        256,
+        464
+      ],
+      "disabled": false
+    },
+    {
+      "id": "f2538040-6263-48b3-bc3e-d66808939d33",
+      "name": "рџ”Ђ Merge: all data",
+      "type": "n8n-nodes-base.merge",
+      "position": [
+        480,
+        304
+      ],
+      "disabled": false
+    },
+    {
+      "id": "226fe652-4ed1-4ee9-8b45-f541d8464dc8",
+      "name": "рџ“ќ Build prompt for Gemini",
+      "type": "n8n-nodes-base.code",
+      "position": [
+        816,
+        304
+      ],
+      "disabled": false
+    }
+  ],
+  "connections": {
+    "вЏ° Schedule: 07:00 РµР¶РµРґРЅРµРІРЅРѕ": {
+      "main": [
+        [
+          {
+            "node": "рџ“Ґ Supabase: С‡РёС‚Р°С‚СЊ T1 + T5 + T6",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "рџ“Ґ T5: Р·РІСѓРє РїР°С‚С‚РµСЂРЅС‹",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "рџ“Ґ T6: РІРёР·СѓР°Р» РїР°С‚С‚РµСЂРЅС‹",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "рџ“… Supabase T2: РєРѕРЅС‚РµРЅС‚ 7 РґРЅРµР№",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "рџ“Ґ Supabase: С‡РёС‚Р°С‚СЊ T1 + T5 + T6": {
+      "main": [
+        [
+          {
+            "node": "рџ”Ђ Merge: all data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "рџ“… Supabase T2: РєРѕРЅС‚РµРЅС‚ 7 РґРЅРµР№": {
+      "main": [
+        [
+          {
+            "node": "рџ”Ђ Merge: all data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "рџ¤– AI Agent: Gemini Flash РіРµРЅРµСЂРёСЂСѓРµС‚ РёРґРµРё": {
+      "main": [
+        [
+          {
+            "node": "рџ“‹ РЎС‚СЂСѓРєС‚СѓСЂРёСЂРѕРІР°С‚СЊ 15 РёРґРµР№",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "рџ“‹ РЎС‚СЂСѓРєС‚СѓСЂРёСЂРѕРІР°С‚СЊ 15 РёРґРµР№": {
+      "main": [
+        [
+          {
+            "node": "в–¶пёЏ Р—Р°РїСѓСЃС‚РёС‚СЊ РњРѕРґСѓР»СЊ 03.5 (РћС†РµРЅРєР°)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "рџ“Ґ T5: Р·РІСѓРє РїР°С‚С‚РµСЂРЅС‹": {
+      "main": [
+        [
+          {
+            "node": "рџ”Ђ Merge: all data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "рџ“Ґ T6: РІРёР·СѓР°Р» РїР°С‚С‚РµСЂРЅС‹": {
+      "main": [
+        [
+          {
+            "node": "рџ”Ђ Merge: all data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "рџ”Ђ Merge: all data": {
+      "main": [
+        [
+          {
+            "node": "рџ“ќ Build prompt for Gemini",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "рџ“ќ Build prompt for Gemini": {
+      "main": [
+        [
+          {
+            "node": "рџ¤– AI Agent: Gemini Flash РіРµРЅРµСЂРёСЂСѓРµС‚ РёРґРµРё",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "nodeCount": 11,
+  "connectionCount": 9
+}

@@ -1,0 +1,650 @@
+{
+  "id": "wrEgOmmyFmfNOJVH",
+  "name": "04.5 | Render Assets",
+  "active": true,
+  "nodes": [
+    {
+      "id": "sch-045",
+      "name": "Schedule: render assets",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        0,
+        180
+      ],
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "minutes",
+              "minutesInterval": 10
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "wh-045",
+      "name": "Webhook: manual WF04.5",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        0,
+        380
+      ],
+      "parameters": {
+        "path": "wf045-render-assets",
+        "httpMethod": "POST",
+        "responseMode": "lastNode"
+      },
+      "webhookId": "wf045-render-assets"
+    },
+    {
+      "id": "readasset-045",
+      "name": "Supabase: read pending asset",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        300,
+        280
+      ],
+      "parameters": {
+        "url": "https://xxnzqridvepixzireqjh.supabase.co/rest/v1/package_assets?select=*&qc_status=eq.pending&asset_type=in.(reel_close,reel_premium,reel_viral,story)&order=created_at.asc&limit=1",
+        "method": "GET",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "apikey",
+              "value": "<SUPABASE_SERVICE_ROLE_KEY>"
+            },
+            {
+              "name": "Authorization",
+              "value": "Bearer <SUPABASE_SERVICE_ROLE_KEY>"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            },
+            {
+              "name": "Prefer",
+              "value": "return=representation"
+            }
+          ]
+        }
+      },
+      "alwaysOutputData": true
+    },
+    {
+      "id": "pickasset-045",
+      "name": "Code: pick pending asset",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        580,
+        280
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "const rows = $input.all().flatMap(i => Array.isArray(i.json) ? i.json : [i.json]).filter(r => r && r.id);\nif (!rows.length) {\n  return [{ json: { has_asset: false, action: 'skip', message: 'No pending package assets for WF04.5.' } }];\n}\nconst asset = rows[0];\nreturn [{ json: { has_asset: true, asset } }];"
+      }
+    },
+    {
+      "id": "ifasset-045",
+      "name": "IF: has asset?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        860,
+        280
+      ],
+      "parameters": {
+        "conditions": {
+          "combinator": "and",
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "has_asset",
+              "leftValue": "={{ $json.has_asset }}",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "readpkg-045",
+      "name": "Supabase: read package",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        1140,
+        120
+      ],
+      "parameters": {
+        "url": "={{ 'https://xxnzqridvepixzireqjh.supabase.co/rest/v1/daily_packages?select=*&id=eq.' + $json.asset.daily_package_id }}",
+        "method": "GET",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "apikey",
+              "value": "<SUPABASE_SERVICE_ROLE_KEY>"
+            },
+            {
+              "name": "Authorization",
+              "value": "Bearer <SUPABASE_SERVICE_ROLE_KEY>"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            },
+            {
+              "name": "Prefer",
+              "value": "return=representation"
+            }
+          ]
+        }
+      },
+      "alwaysOutputData": true
+    },
+    {
+      "id": "readqueue-045",
+      "name": "Supabase: read queue variant",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        1420,
+        120
+      ],
+      "parameters": {
+        "url": "={{ 'https://xxnzqridvepixzireqjh.supabase.co/rest/v1/content_queue?select=*,content_variants(*)&id=eq.' + $('Code: pick pending asset').item.json.asset.content_queue_id }}",
+        "method": "GET",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "apikey",
+              "value": "<SUPABASE_SERVICE_ROLE_KEY>"
+            },
+            {
+              "name": "Authorization",
+              "value": "Bearer <SUPABASE_SERVICE_ROLE_KEY>"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            },
+            {
+              "name": "Prefer",
+              "value": "return=representation"
+            }
+          ]
+        }
+      },
+      "alwaysOutputData": true
+    },
+    {
+      "id": "buildrender-045",
+      "name": "Code: build render request",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1700,
+        120
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "const picked = $('Code: pick pending asset').first().json;\nconst asset = picked.asset;\nconst packageRows = $('Supabase: read package').all().flatMap(i => Array.isArray(i.json) ? i.json : [i.json]).filter(r => r && r.id);\nconst queueRows = $input.all().flatMap(i => Array.isArray(i.json) ? i.json : [i.json]).filter(r => r && r.id);\nconst pkg = packageRows[0] || {};\nconst queue = queueRows[0] || {};\nconst variant = queue.content_variants || {};\nconst safeText = v => {\n  if (!v) return '';\n  if (typeof v === 'string') return v;\n  try { return JSON.stringify(v); } catch (e) { return String(v); }\n};\nconst arr = v => Array.isArray(v) ? v : [];\nconst screen = typeof variant.screen_text_json === 'string' ? (() => { try { return JSON.parse(variant.screen_text_json); } catch(e) { return []; } })() : variant.screen_text_json;\nconst scenes = typeof variant.scene_plan_json === 'string' ? (() => { try { return JSON.parse(variant.scene_plan_json); } catch(e) { return []; } })() : variant.scene_plan_json;\nconst hook = variant.first_frame || variant.hook_text || asset.caption || '??????, ??? ???????? ????????????';\nconst cta = asset.cta || variant.cta || pkg.cta || '?????? ? ??????, ????? ???????? ???? ????';\nconst textLines = [];\nfor (const x of arr(screen)) textLines.push(safeText(x.text || x.screen_text || x.title || x));\nfor (const x of arr(scenes)) textLines.push(safeText(x.text || x.action || x.visual || x));\nif (!textLines.length && asset.caption) textLines.push(asset.caption);\nconst base = {\n  asset_id: asset.id,\n  daily_package_id: asset.daily_package_id,\n  asset_type: asset.asset_type,\n  content_queue_id: asset.content_queue_id,\n  package_date: pkg.package_date,\n  caption: asset.caption || variant.caption || '',\n  cta,\n};\nlet render_url = 'http://85.239.59.252:8003/render';\nlet render_tool = 'ffmpeg_typewriter';\nlet render_body;\nif (asset.asset_type === 'story' || asset.render_tool === 'playwright' || queue.production_mode === 'story_template') {\n  render_url = 'http://85.239.59.252:8004/render_chat';\n  render_tool = 'playwright_chat';\n  const messages = textLines.slice(0, 6).map((text, i) => ({ from: i % 2 === 0 ? 'client' : 'me', text }));\n  if (!messages.length) messages.push({ from: 'client', text: hook }, { from: 'me', text: cta });\n  render_body = { messages, theme: 'dark_premium', duration: 12 };\n} else if (asset.asset_type === 'reel_premium' || queue.queue_group === 'premium') {\n  render_tool = 'ffmpeg_result_card';\n  render_body = {\n    type: 'result_card',\n    business_name: '???? ?? ?????',\n    metrics: textLines.slice(0, 4),\n    tagline: hook,\n    cta,\n    bg_color: '#0d0d0d',\n    duration: 12,\n    resolution: '1080x1920'\n  };\n} else {\n  render_tool = 'ffmpeg_typewriter';\n  render_body = {\n    type: 'typewriter',\n    hook,\n    texts: textLines.slice(0, 6),\n    solution: cta,\n    bg_color: asset.asset_type === 'reel_viral' ? '#111111' : '#0d0d0d',\n    duration: 12,\n    resolution: '1080x1920'\n  };\n}\nreturn [{ json: { ...base, render_url, render_tool, render_body } }];"
+      }
+    },
+    {
+      "id": "render-045",
+      "name": "HTTP: render video",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        1980,
+        120
+      ],
+      "parameters": {
+        "url": "={{ $json.render_url }}",
+        "method": "POST",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "contentType": "raw",
+        "rawContentType": "application/json",
+        "body": "={{ JSON.stringify($json.render_body) }}"
+      },
+      "onError": "continueRegularOutput"
+    },
+    {
+      "id": "buildupdate-045",
+      "name": "Code: build asset update",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2260,
+        120
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "const req = $('Code: build render request').first().json;\nconst response = $input.first()?.json || {};\nconst now = new Date().toISOString();\nconst ok = response.success === true && !!response.file_path;\nconst body = ok ? {\n  file_path: response.file_path,\n  storage_url: response.file_url || null,\n  qc_status: 'passed',\n  qc_notes: 'Rendered by WF04.5 via ' + req.render_tool,\n  duration_seconds: req.render_body?.duration || 12,\n  resolution: '1080x1920',\n  updated_at: now\n} : {\n  qc_status: 'failed',\n  qc_notes: 'Render failed in WF04.5: ' + (response.message || response.error || JSON.stringify(response).slice(0, 500)),\n  updated_at: now\n};\nreturn [{ json: { asset_id: req.asset_id, daily_package_id: req.daily_package_id, ok, update_body: body, render_response: response } }];"
+      }
+    },
+    {
+      "id": "patchasset-045",
+      "name": "Supabase: update package asset",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        2540,
+        120
+      ],
+      "parameters": {
+        "url": "={{ 'https://xxnzqridvepixzireqjh.supabase.co/rest/v1/package_assets?id=eq.' + $json.asset_id }}",
+        "method": "PATCH",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "apikey",
+              "value": "<SUPABASE_SERVICE_ROLE_KEY>"
+            },
+            {
+              "name": "Authorization",
+              "value": "Bearer <SUPABASE_SERVICE_ROLE_KEY>"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            },
+            {
+              "name": "Prefer",
+              "value": "return=representation"
+            },
+            {
+              "name": "Prefer",
+              "value": "return=representation"
+            }
+          ]
+        },
+        "sendBody": true,
+        "contentType": "raw",
+        "rawContentType": "application/json",
+        "body": "={{ JSON.stringify($json.update_body) }}"
+      }
+    },
+    {
+      "id": "readblockers-045",
+      "name": "Supabase: read package blockers",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        2820,
+        120
+      ],
+      "parameters": {
+        "url": "={{ 'https://xxnzqridvepixzireqjh.supabase.co/rest/v1/package_assets?select=id,qc_status,asset_type&daily_package_id=eq.' + $('Code: build asset update').item.json.daily_package_id + '&asset_type=in.(reel_close,reel_premium,reel_viral,story)&qc_status=in.(pending,failed)&limit=1' }}",
+        "method": "GET",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "apikey",
+              "value": "<SUPABASE_SERVICE_ROLE_KEY>"
+            },
+            {
+              "name": "Authorization",
+              "value": "Bearer <SUPABASE_SERVICE_ROLE_KEY>"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            },
+            {
+              "name": "Prefer",
+              "value": "return=representation"
+            }
+          ]
+        }
+      },
+      "alwaysOutputData": true
+    },
+    {
+      "id": "decide-045",
+      "name": "Code: decide package ready",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        3100,
+        120
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "const rows = $input.all().flatMap(i => Array.isArray(i.json) ? i.json : [i.json]).filter(r => r && r.id);\nconst render = $('Code: build asset update').first().json;\nconst package_ready = rows.length === 0;\nreturn [{ json: { package_ready, daily_package_id: render.daily_package_id, rendered_asset_id: render.asset_id, blocking_assets: rows.map(r => ({ id: r.id, asset_type: r.asset_type, qc_status: r.qc_status })) } }];"
+      }
+    },
+    {
+      "id": "ifready-045",
+      "name": "IF: package ready?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        3380,
+        120
+      ],
+      "parameters": {
+        "conditions": {
+          "combinator": "and",
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "package_ready",
+              "leftValue": "={{ $json.package_ready }}",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "patchpkg-045",
+      "name": "Supabase: mark package ready",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        3660,
+        20
+      ],
+      "parameters": {
+        "url": "={{ 'https://xxnzqridvepixzireqjh.supabase.co/rest/v1/daily_packages?id=eq.' + $json.daily_package_id }}",
+        "method": "PATCH",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "apikey",
+              "value": "<SUPABASE_SERVICE_ROLE_KEY>"
+            },
+            {
+              "name": "Authorization",
+              "value": "Bearer <SUPABASE_SERVICE_ROLE_KEY>"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            },
+            {
+              "name": "Prefer",
+              "value": "return=representation"
+            },
+            {
+              "name": "Prefer",
+              "value": "return=representation"
+            }
+          ]
+        },
+        "sendBody": true,
+        "contentType": "raw",
+        "rawContentType": "application/json",
+        "body": "={{ JSON.stringify({status:'ready',folder_path:'/root/renders',updated_at:new Date().toISOString()}) }}"
+      }
+    },
+    {
+      "id": "readyresult-045",
+      "name": "Code: ready result",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        3940,
+        20
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "const d = $('Code: decide package ready').first().json;\nreturn [{ json: { action: 'package_ready', daily_package_id: d.daily_package_id, rendered_asset_id: d.rendered_asset_id, message: 'All package assets rendered; package is ready for WF05 delivery.' } }];"
+      }
+    },
+    {
+      "id": "waiting-045",
+      "name": "Code: waiting result",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        3660,
+        220
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "const d = $('Code: decide package ready').first().json;\nreturn [{ json: { action: 'asset_rendered_waiting', daily_package_id: d.daily_package_id, rendered_asset_id: d.rendered_asset_id, blocking_assets: d.blocking_assets, message: 'Asset rendered; package still has pending or failed assets.' } }];"
+      }
+    },
+    {
+      "id": "skip-045",
+      "name": "Code: no pending assets",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1140,
+        440
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "return [{ json: { action: 'skip', message: 'No pending package assets for WF04.5.' } }];"
+      }
+    }
+  ],
+  "connections": {
+    "Schedule: render assets": {
+      "main": [
+        [
+          {
+            "node": "Supabase: read pending asset",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Webhook: manual WF04.5": {
+      "main": [
+        [
+          {
+            "node": "Supabase: read pending asset",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Supabase: read pending asset": {
+      "main": [
+        [
+          {
+            "node": "Code: pick pending asset",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code: pick pending asset": {
+      "main": [
+        [
+          {
+            "node": "IF: has asset?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "IF: has asset?": {
+      "main": [
+        [
+          {
+            "node": "Supabase: read package",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Code: no pending assets",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Supabase: read package": {
+      "main": [
+        [
+          {
+            "node": "Supabase: read queue variant",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Supabase: read queue variant": {
+      "main": [
+        [
+          {
+            "node": "Code: build render request",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code: build render request": {
+      "main": [
+        [
+          {
+            "node": "HTTP: render video",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP: render video": {
+      "main": [
+        [
+          {
+            "node": "Code: build asset update",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code: build asset update": {
+      "main": [
+        [
+          {
+            "node": "Supabase: update package asset",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Supabase: update package asset": {
+      "main": [
+        [
+          {
+            "node": "Supabase: read package blockers",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Supabase: read package blockers": {
+      "main": [
+        [
+          {
+            "node": "Code: decide package ready",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code: decide package ready": {
+      "main": [
+        [
+          {
+            "node": "IF: package ready?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "IF: package ready?": {
+      "main": [
+        [
+          {
+            "node": "Supabase: mark package ready",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Code: waiting result",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Supabase: mark package ready": {
+      "main": [
+        [
+          {
+            "node": "Code: ready result",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "callerPolicy": "workflowsFromSameOwner",
+    "availableInMCP": false
+  },
+  "exportedAt": "2026-05-13T17:47:56.611Z"
+}

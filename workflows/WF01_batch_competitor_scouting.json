@@ -1,0 +1,446 @@
+{
+  "name": "01 | Batch Competitor Scouting",
+  "active": false,
+  "isArchived": false,
+  "nodes": [
+    {
+      "id": "schedule-01",
+      "name": "Schedule: process started batch",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [0, 180],
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "10 6 * * *"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "manual-webhook-01",
+      "name": "Webhook: manual WF01",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [0, 380],
+      "parameters": {
+        "path": "wf01-batch-scouting",
+        "httpMethod": "POST",
+        "responseMode": "lastNode"
+      }
+    },
+    {
+      "id": "read-batch-01",
+      "name": "Supabase: read started batch",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [280, 260],
+      "parameters": {
+        "url": "https://xxnzqridvepixzireqjh.supabase.co/rest/v1/competitor_batches?select=*&status=eq.started&order=created_at.asc&limit=1",
+        "method": "GET",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "apikey",
+              "value": "SUPABASE_SECRET_KEY"
+            },
+            {
+              "name": "Authorization",
+              "value": "Bearer SUPABASE_SECRET_KEY"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "normalize-batch-01",
+      "name": "Code: normalize batch",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [540, 260],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "const first = $input.first()?.json;\nconst batch = Array.isArray(first) ? first[0] : first;\n\nif (!batch || !batch.id) {\n  return [{ json: { has_batch: false, action: 'no_started_batch', message: 'No competitor batch with status=started.' } }];\n}\n\nreturn [{\n  json: {\n    has_batch: true,\n    batch_id: batch.id,\n    target_video_count: batch.target_video_count || 50,\n    platform: batch.platform || 'instagram'\n  }\n}];"
+      }
+    },
+    {
+      "id": "if-batch-01",
+      "name": "IF: has started batch?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [800, 260],
+      "parameters": {
+        "conditions": {
+          "combinator": "and",
+          "conditions": [
+            {
+              "id": "has-batch",
+              "leftValue": "={{ $json.has_batch }}",
+              "operator": {
+                "type": "boolean",
+                "operation": "true"
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "read-accounts-01",
+      "name": "Supabase: read active competitors",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [1060, 120],
+      "parameters": {
+        "url": "https://xxnzqridvepixzireqjh.supabase.co/rest/v1/competitor_accounts?select=id,platform,account_url,username,priority&status=eq.active&platform=eq.instagram&order=priority.asc",
+        "method": "GET",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "apikey",
+              "value": "SUPABASE_SECRET_KEY"
+            },
+            {
+              "name": "Authorization",
+              "value": "Bearer SUPABASE_SECRET_KEY"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "build-apify-01",
+      "name": "Code: build Apify input",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1320, 120],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "const accountsRaw = $input.all().flatMap(item => Array.isArray(item.json) ? item.json : [item.json]).filter(Boolean);\nconst batch = $('Code: normalize batch').item.json;\nconst accounts = accountsRaw.filter(a => a.account_url);\n\nif (accounts.length === 0) {\n  return [{\n    json: {\n      has_accounts: false,\n      batch_id: batch.batch_id,\n      message: 'No active Instagram competitor accounts in competitor_accounts.'\n    }\n  }];\n}\n\nconst perAccountLimit = Math.max(12, Math.ceil((batch.target_video_count || 50) / accounts.length) + 5);\nreturn [{\n  json: {\n    has_accounts: true,\n    batch_id: batch.batch_id,\n    target_video_count: batch.target_video_count || 50,\n    accounts,\n    apify_input: {\n      directUrls: accounts.map(a => a.account_url),\n      resultsType: 'posts',\n      resultsLimit: perAccountLimit,\n      addParentData: false\n    }\n  }\n}];"
+      }
+    },
+    {
+      "id": "if-accounts-01",
+      "name": "IF: has competitor accounts?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [1580, 120],
+      "parameters": {
+        "conditions": {
+          "combinator": "and",
+          "conditions": [
+            {
+              "id": "has-accounts",
+              "leftValue": "={{ $json.has_accounts }}",
+              "operator": {
+                "type": "boolean",
+                "operation": "true"
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "apify-01",
+      "name": "Apify: scrape competitor posts",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [1840, 0],
+      "parameters": {
+        "url": "https://api.apify.com/v2/acts/apify~instagram-scraper/run-sync-get-dataset-items?token=APIFY_API_TOKEN",
+        "method": "POST",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "contentType": "raw",
+        "rawContentType": "application/json",
+        "body": "={{ JSON.stringify($json.apify_input) }}"
+      }
+    },
+    {
+      "id": "score-videos-01",
+      "name": "Code: score and select videos",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [2100, 0],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "const batch = $('Code: build Apify input').item.json;\nconst accounts = batch.accounts || [];\nconst accountByUsername = new Map();\nconst accountByUrl = new Map();\nfor (const a of accounts) {\n  if (a.username) accountByUsername.set(String(a.username).toLowerCase(), a);\n  if (a.account_url) accountByUrl.set(String(a.account_url).replace(/\\/$/, '').toLowerCase(), a);\n}\n\nconst raw = $input.all().flatMap(item => Array.isArray(item.json) ? item.json : [item.json]).filter(Boolean);\nconst target = batch.target_video_count || 50;\n\nfunction num(v) {\n  const n = Number(v || 0);\n  return Number.isFinite(n) ? n : 0;\n}\nfunction cleanUrl(v) {\n  return String(v || '').replace(/\\/$/, '');\n}\nfunction videoUrl(p) {\n  return p.url || p.videoUrl || p.video_url || (p.shortCode ? `https://www.instagram.com/reel/${p.shortCode}/` : '');\n}\nfunction ownerUsername(p) {\n  return String(p.ownerUsername || p.username || p.owner?.username || '').toLowerCase();\n}\n\nlet videos = raw.map(p => {\n  const username = ownerUsername(p);\n  const account = accountByUsername.get(username) || accountByUrl.get(cleanUrl(p.ownerProfileUrl || p.ownerUrl).toLowerCase()) || null;\n  const views = num(p.videoViewCount || p.videoPlayCount || p.views || p.viewCount);\n  const likes = num(p.likesCount || p.likes || p.likeCount);\n  const comments = num(p.commentsCount || p.comments || p.commentCount);\n  const saves = num(p.saves || p.savesCount);\n  const shares = num(p.shares || p.sharesCount);\n  const followers = num(p.followersCount || p.ownerFollowersCount || p.owner?.followersCount);\n  const isVideo = Boolean(p.videoUrl || p.video_url || views > 0 || String(p.type || '').toLowerCase().includes('video'));\n  return {\n    raw: p,\n    account,\n    platform: 'instagram',\n    video_url: videoUrl(p),\n    shortcode: p.shortCode || p.shortcode || p.id || null,\n    caption: String(p.caption || p.text || '').slice(0, 2000),\n    published_at: p.timestamp || p.takenAtTimestamp ? new Date((p.takenAtTimestamp || 0) * 1000).toISOString() : (p.date || null),\n    thumbnail_url: p.displayUrl || p.thumbnailUrl || p.imageUrl || '',\n    raw_video_storage_path: null,\n    views,\n    likes,\n    comments,\n    saves,\n    shares,\n    followers_at_scan: followers || null,\n    isVideo\n  };\n}).filter(v => v.isVideo && v.video_url).slice(0, Math.max(target * 2, 80));\n\nconst byAccount = new Map();\nfor (const v of videos) {\n  const key = v.account?.id || ownerUsername(v.raw) || 'unknown';\n  if (!byAccount.has(key)) byAccount.set(key, []);\n  byAccount.get(key).push(v);\n}\n\nfor (const group of byAccount.values()) {\n  const viewValues = group.map(v => v.views).filter(v => v > 0).sort((a, b) => a - b);\n  const avg = viewValues.length ? viewValues.reduce((a, b) => a + b, 0) / viewValues.length : 0;\n  group.sort((a, b) => b.views - a.views);\n  const topCount = Math.max(1, Math.ceil(group.length * 0.2));\n  group.forEach((v, idx) => {\n    const engagement = v.views > 0 ? (v.likes + v.comments * 3 + v.saves * 5 + v.shares * 6) / v.views : 0;\n    const multiplier = avg > 0 ? v.views / avg : 0;\n    const top20 = idx < topCount;\n    const strongEngagement = engagement >= 0.08 && v.views > 0;\n    const strict = top20 || multiplier >= 2 || strongEngagement;\n    const extreme = multiplier >= 20;\n    const score = (multiplier * 45) + (engagement * 400) + (top20 ? 20 : 0) + (extreme ? 80 : 0) + Math.log10(Math.max(v.views, 1));\n    Object.assign(v, {\n      account_average_views: avg || null,\n      views_multiplier: multiplier || null,\n      engagement_rate: engagement || null,\n      selection_score: score,\n      _strict: strict,\n      _extreme: extreme,\n      _reason: extreme ? 'extreme_viral_20x' : strict ? [top20 && 'top_20_percent', multiplier >= 2 && 'views_2x_account_avg', strongEngagement && 'strong_engagement'].filter(Boolean).join(',') : 'below_strict_threshold'\n    });\n  });\n}\n\nvideos.sort((a, b) => b.selection_score - a.selection_score);\nconst strictVideos = videos.filter(v => v._strict || v._extreme);\nconst selected = new Set(strictVideos.map(v => v.video_url));\nfor (const v of videos) {\n  if (selected.size >= 10) break;\n  selected.add(v.video_url);\n}\n\nconst limited = videos.slice(0, Math.max(target, selected.size));\nconst rows = limited.map(v => {\n  const isSelected = selected.has(v.video_url);\n  const near = isSelected && !v._strict && !v._extreme;\n  return {\n    batch_id: batch.batch_id,\n    competitor_account_id: v.account?.id || null,\n    platform: v.platform,\n    video_url: v.video_url,\n    shortcode: v.shortcode,\n    caption: v.caption,\n    published_at: v.published_at,\n    thumbnail_url: v.thumbnail_url,\n    raw_video_storage_path: null,\n    views: v.views || null,\n    likes: v.likes || null,\n    comments: v.comments || null,\n    saves: v.saves || null,\n    shares: v.shares || null,\n    followers_at_scan: v.followers_at_scan,\n    account_average_views: v.account_average_views,\n    views_multiplier: v.views_multiplier,\n    engagement_rate: v.engagement_rate,\n    selection_score: v.selection_score,\n    selection_reason: near ? 'near_threshold_fill_to_minimum_10' : v._reason,\n    selection_type: v._extreme ? 'extreme_viral' : v._strict ? 'strict' : near ? 'near_threshold' : 'rejected',\n    status: isSelected ? (near ? 'near_threshold' : 'qualified') : 'rejected'\n  };\n});\n\nconst finalSelected = rows.filter(r => ['strict', 'near_threshold', 'extreme_viral'].includes(r.selection_type));\nconst strictCount = rows.filter(r => r.selection_type === 'strict' || r.selection_type === 'extreme_viral').length;\nconst nearCount = rows.filter(r => r.selection_type === 'near_threshold').length;\n\nreturn [{\n  json: {\n    batch_id: batch.batch_id,\n    found_video_count: rows.length,\n    strict_selected_count: strictCount,\n    near_threshold_selected_count: nearCount,\n    final_selected_count: finalSelected.length,\n    rows,\n    selection_notes: `WF01 processed ${raw.length} raw items, saved ${rows.length} videos, selected ${finalSelected.length}: strict/extreme=${strictCount}, near-threshold=${nearCount}.`\n  }\n}];"
+      }
+    },
+    {
+      "id": "insert-videos-01",
+      "name": "Supabase: insert competitor videos",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [2360, 0],
+      "parameters": {
+        "url": "https://xxnzqridvepixzireqjh.supabase.co/rest/v1/competitor_videos",
+        "method": "POST",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "apikey",
+              "value": "SUPABASE_SECRET_KEY"
+            },
+            {
+              "name": "Authorization",
+              "value": "Bearer SUPABASE_SECRET_KEY"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            },
+            {
+              "name": "Prefer",
+              "value": "resolution=merge-duplicates"
+            }
+          ]
+        },
+        "sendBody": true,
+        "contentType": "raw",
+        "rawContentType": "application/json",
+        "body": "={{ JSON.stringify($json.rows) }}"
+      }
+    },
+    {
+      "id": "update-batch-success-01",
+      "name": "Supabase: update batch selection_done",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [2620, 0],
+      "parameters": {
+        "url": "=https://xxnzqridvepixzireqjh.supabase.co/rest/v1/competitor_batches?id=eq.{{ $('Code: score and select videos').item.json.batch_id }}",
+        "method": "PATCH",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "apikey",
+              "value": "SUPABASE_SECRET_KEY"
+            },
+            {
+              "name": "Authorization",
+              "value": "Bearer SUPABASE_SECRET_KEY"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "contentType": "raw",
+        "rawContentType": "application/json",
+        "body": "={{ JSON.stringify({ status: 'selection_done', found_video_count: $('Code: score and select videos').item.json.found_video_count, strict_selected_count: $('Code: score and select videos').item.json.strict_selected_count, near_threshold_selected_count: $('Code: score and select videos').item.json.near_threshold_selected_count, final_selected_count: $('Code: score and select videos').item.json.final_selected_count, selection_notes: $('Code: score and select videos').item.json.selection_notes }) }}"
+      }
+    },
+    {
+      "id": "no-accounts-01",
+      "name": "Supabase: mark batch failed no accounts",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [1840, 260],
+      "parameters": {
+        "url": "=https://xxnzqridvepixzireqjh.supabase.co/rest/v1/competitor_batches?id=eq.{{ $json.batch_id }}",
+        "method": "PATCH",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "apikey",
+              "value": "SUPABASE_SECRET_KEY"
+            },
+            {
+              "name": "Authorization",
+              "value": "Bearer SUPABASE_SECRET_KEY"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "contentType": "raw",
+        "rawContentType": "application/json",
+        "body": "={{ JSON.stringify({ status: 'failed', error_message: $json.message, selection_notes: $json.message }) }}"
+      }
+    },
+    {
+      "id": "no-batch-01",
+      "name": "Code: no started batch",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1060, 420],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "return [{ json: $input.first().json }];"
+      }
+    }
+  ],
+  "connections": {
+    "Schedule: process started batch": {
+      "main": [
+        [
+          {
+            "node": "Supabase: read started batch",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Webhook: manual WF01": {
+      "main": [
+        [
+          {
+            "node": "Supabase: read started batch",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Supabase: read started batch": {
+      "main": [
+        [
+          {
+            "node": "Code: normalize batch",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code: normalize batch": {
+      "main": [
+        [
+          {
+            "node": "IF: has started batch?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "IF: has started batch?": {
+      "main": [
+        [
+          {
+            "node": "Supabase: read active competitors",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Code: no started batch",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Supabase: read active competitors": {
+      "main": [
+        [
+          {
+            "node": "Code: build Apify input",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code: build Apify input": {
+      "main": [
+        [
+          {
+            "node": "IF: has competitor accounts?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "IF: has competitor accounts?": {
+      "main": [
+        [
+          {
+            "node": "Apify: scrape competitor posts",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Supabase: mark batch failed no accounts",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Apify: scrape competitor posts": {
+      "main": [
+        [
+          {
+            "node": "Code: score and select videos",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code: score and select videos": {
+      "main": [
+        [
+          {
+            "node": "Supabase: insert competitor videos",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Supabase: insert competitor videos": {
+      "main": [
+        [
+          {
+            "node": "Supabase: update batch selection_done",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "tags": []
+}
+
