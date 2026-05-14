@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-05-14T10:58:52.278Z",
+  "updatedAt": "2026-05-14T16:21:48.576Z",
   "createdAt": "2026-05-13T14:18:48.324Z",
   "id": "NQRIRMhgVQb8OxV2",
   "name": "05 | Delivery Telegram",
@@ -171,7 +171,7 @@
       ],
       "parameters": {
         "mode": "runOnceForAllItems",
-        "jsCode": "const token = \"{{TELEGRAM_BOT_TOKEN}}\";\nconst chatId = \"1347534574\";\nconst pkg = $('Code: pick ready package').first().json.package;\nconst assets = $input.all().flatMap(i => Array.isArray(i.json) ? i.json : [i.json]).filter(a => a && a.id);\nconst order = ['reel_close', 'reel_premium', 'reel_viral', 'story'];\nconst label = { reel_close: 'Reel 1 - close pattern', reel_premium: 'Reel 2 - premium', reel_viral: 'Reel 3 - viral', story: 'Story' };\nconst videos = assets.filter(a => order.includes(a.asset_type)).sort((a, b) => order.indexOf(a.asset_type) - order.indexOf(b.asset_type));\nconst requests = [];\nconst failed = [];\nconst telegramProxyBase = 'https://dark-field-8e65.nikitagpt2114.workers.dev';\nfunction tgUrl(method) { return telegramProxyBase + '/bot' + token + '/' + method; }\nfor (const asset of videos) {\n  const url = asset.storage_url || (String(asset.file_path || '').startsWith('http') ? asset.file_path : '');\n  const caption = [label[asset.asset_type] || asset.asset_type, asset.caption || '', asset.cta ? 'CTA: ' + asset.cta : '']\n    .filter(Boolean)\n    .join('\\n\\n')\n    .slice(0, 1000);\n  if (!url) {\n    failed.push({ id: asset.id, asset_type: asset.asset_type, reason: 'No public URL in storage_url/file_path' });\n    continue;\n  }\n  requests.push({\n    package_id: pkg.id,\n    kind: 'video',\n    asset_type: asset.asset_type,\n    telegram_url: tgUrl('sendVideo'),\n    telegram_body: { chat_id: chatId, video: url, caption, supports_streaming: true }\n  });\n}\nconst captionLines = videos.map(asset =>\n  [label[asset.asset_type] || asset.asset_type, asset.caption ? 'Caption: ' + asset.caption : '', asset.cta ? 'CTA: ' + asset.cta : '']\n    .filter(Boolean)\n    .join('\\n')\n);\nconst summary = ['Package ready: ' + (pkg.package_date || pkg.id), '', ...captionLines, '', 'Reply: published 1 2 3, revise second, all ok, send links again.']\n  .join('\\n\\n')\n  .slice(0, 3900);\nrequests.push({\n  package_id: pkg.id,\n  kind: 'summary',\n  asset_type: 'summary',\n  telegram_url: tgUrl('sendMessage'),\n  telegram_body: { chat_id: chatId, text: summary }\n});\nif (failed.length) {\n  requests.push({\n    package_id: pkg.id,\n    kind: 'failure_notice',\n    asset_type: 'failure_notice',\n    telegram_url: tgUrl('sendMessage'),\n    telegram_body: { chat_id: chatId, text: 'Some videos failed: ' + failed.map(f => f.asset_type + ': ' + f.reason).join('; ').slice(0, 3200) }\n  });\n}\nreturn requests.map(r => ({ json: r }));"
+        "jsCode": "const token = \"{{TELEGRAM_BOT_TOKEN}}\";\nconst chatId = \"1347534574\";\nconst pkg = $('Code: pick ready package').first().json.package;\nconst assets = $input.all().flatMap(i => Array.isArray(i.json) ? i.json : [i.json]).filter(a => a && a.id);\nconst order = ['reel_close', 'reel_premium', 'reel_viral', 'story'];\nconst label = { reel_close: 'Reel 1 - close pattern', reel_premium: 'Reel 2 - premium', reel_viral: 'Reel 3 - viral', story: 'Story' };\nconst sortedVideos = assets.filter(a => order.includes(a.asset_type)).sort((a, b) => order.indexOf(a.asset_type) - order.indexOf(b.asset_type));\nconst workerBase = 'https://dark-field-8e65.nikitagpt2114.workers.dev';\nconst videos = [];\nconst failed = [];\n\nfunction sourceUrl(asset) {\n  const storage = String(asset.storage_url || '');\n  if (storage.startsWith('http')) return storage;\n  const file = String(asset.file_path || '');\n  if (file.startsWith('http')) return file;\n  return '';\n}\n\nfunction localFilePath(asset) {\n  const file = String(asset.file_path || '');\n  if (file.startsWith('/root/')) return file;\n  return '';\n}\n\nfor (const asset of sortedVideos) {\n  const caption = [label[asset.asset_type] || asset.asset_type, asset.caption || '', asset.cta ? 'CTA: ' + asset.cta : '']\n    .filter(Boolean)\n    .join('\\n\\n')\n    .slice(0, 1000);\n  const filePath = localFilePath(asset);\n  const url = sourceUrl(asset);\n  if (!filePath && !url) {\n    failed.push({ id: asset.id, asset_type: asset.asset_type, reason: 'No local file_path or downloadable URL' });\n    continue;\n  }\n  videos.push({\n    id: asset.id,\n    asset_type: asset.asset_type,\n    file_path: filePath,\n    storage_url: url,\n    caption,\n  });\n}\n\nconst captionLines = sortedVideos.map(asset =>\n  [label[asset.asset_type] || asset.asset_type, asset.caption ? 'Caption: ' + asset.caption : '', asset.cta ? 'CTA: ' + asset.cta : '']\n    .filter(Boolean)\n    .join('\\n')\n);\nconst failureLine = failed.length ? 'Not sent: ' + failed.map(f => f.asset_type + ' - ' + f.reason).join('; ') : '';\nconst summary = ['Package ready: ' + (pkg.package_date || pkg.id), '', ...captionLines, failureLine, '', 'Reply: published 1 2 3, revise second, all ok, send links again.']\n  .filter(Boolean)\n  .join('\\n\\n')\n  .slice(0, 3900);\n\nif (!videos.length) {\n  throw new Error('WF05 has no videos with local file_path or downloadable URL. Failed: ' + JSON.stringify(failed));\n}\n\nreturn [{ json: {\n  package_id: pkg.id,\n  token,\n  chat_id: chatId,\n  worker_base: workerBase,\n  videos,\n  summary_text: summary,\n  video_count: videos.length,\n  failed_count: failed.length,\n} }];"
       }
     },
     {
@@ -180,7 +180,7 @@
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.4,
       "position": [
-        1700,
+        2040,
         140
       ],
       "parameters": {
@@ -222,7 +222,7 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        1980,
+        2240,
         140
       ],
       "parameters": {
@@ -246,7 +246,7 @@
     },
     {
       "id": "telegram-http-05",
-      "name": "Telegram: send prepared request",
+      "name": "Telegram Relay: send package",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.4,
       "position": [
@@ -254,7 +254,7 @@
         140
       ],
       "parameters": {
-        "url": "={{ $json.telegram_url }}",
+        "url": "http://127.0.0.1:8005/send-package",
         "method": "POST",
         "sendHeaders": true,
         "headerParameters": {
@@ -268,9 +268,9 @@
         "sendBody": true,
         "contentType": "raw",
         "rawContentType": "application/json",
-        "body": "={{ JSON.stringify($json.telegram_body) }}",
+        "body": "={{ JSON.stringify($json) }}",
         "options": {
-          "timeout": 120000
+          "timeout": 180000
         }
       },
       "retryOnFail": true,
@@ -288,7 +288,7 @@
       ],
       "parameters": {
         "mode": "runOnceForAllItems",
-        "jsCode": "const built = $('Code: build Telegram requests').all().map(i => i.json);\nconst responses = $input.all().map(i => i.json);\nconst pkg = built[0]?.package_id || $('Code: pick ready package').first().json.package.id;\nreturn [{ json: { package_id: pkg, sent_count: responses.length, requested_count: built.length } }];"
+        "jsCode": "const src = $('Code: build Telegram requests').first().json;\nconst response = $input.first().json;\nif (response.ok !== true) {\n  throw new Error('Telegram relay returned not ok: ' + JSON.stringify(response).slice(0, 1000));\n}\nreturn [{ json: { package_id: src.package_id, sent_count: response.sent_count, video_count: src.video_count, telegram_result: response } }];"
       }
     }
   ],
@@ -381,18 +381,7 @@
       "main": [
         [
           {
-            "node": "Telegram: send prepared request",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Telegram: send prepared request": {
-      "main": [
-        [
-          {
-            "node": "Code: Telegram send result",
+            "node": "Telegram Relay: send package",
             "type": "main",
             "index": 0
           }
@@ -404,6 +393,17 @@
         [
           {
             "node": "Supabase: mark delivered",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Telegram Relay: send package": {
+      "main": [
+        [
+          {
+            "node": "Code: Telegram send result",
             "type": "main",
             "index": 0
           }
@@ -423,9 +423,9 @@
   },
   "meta": null,
   "pinData": null,
-  "versionId": "b039b491-8359-4d35-8cd8-6246c2e0e78e",
-  "activeVersionId": "b039b491-8359-4d35-8cd8-6246c2e0e78e",
-  "versionCounter": 28,
+  "versionId": "d82f41ec-03e0-4a7e-8b25-5a5dfc4ff27a",
+  "activeVersionId": "d82f41ec-03e0-4a7e-8b25-5a5dfc4ff27a",
+  "versionCounter": 38,
   "triggerCount": 2,
   "shared": [
     {
@@ -448,9 +448,9 @@
   ],
   "tags": [],
   "activeVersion": {
-    "updatedAt": "2026-05-14T10:58:52.278Z",
-    "createdAt": "2026-05-14T10:58:52.278Z",
-    "versionId": "b039b491-8359-4d35-8cd8-6246c2e0e78e",
+    "updatedAt": "2026-05-14T16:21:48.581Z",
+    "createdAt": "2026-05-14T16:21:48.581Z",
+    "versionId": "d82f41ec-03e0-4a7e-8b25-5a5dfc4ff27a",
     "workflowId": "NQRIRMhgVQb8OxV2",
     "nodes": [
       {
@@ -617,7 +617,7 @@
         ],
         "parameters": {
           "mode": "runOnceForAllItems",
-          "jsCode": "const token = \"{{TELEGRAM_BOT_TOKEN}}\";\nconst chatId = \"1347534574\";\nconst pkg = $('Code: pick ready package').first().json.package;\nconst assets = $input.all().flatMap(i => Array.isArray(i.json) ? i.json : [i.json]).filter(a => a && a.id);\nconst order = ['reel_close', 'reel_premium', 'reel_viral', 'story'];\nconst label = { reel_close: 'Reel 1 - close pattern', reel_premium: 'Reel 2 - premium', reel_viral: 'Reel 3 - viral', story: 'Story' };\nconst videos = assets.filter(a => order.includes(a.asset_type)).sort((a, b) => order.indexOf(a.asset_type) - order.indexOf(b.asset_type));\nconst requests = [];\nconst failed = [];\nconst telegramProxyBase = 'https://dark-field-8e65.nikitagpt2114.workers.dev';\nfunction tgUrl(method) { return telegramProxyBase + '/bot' + token + '/' + method; }\nfor (const asset of videos) {\n  const url = asset.storage_url || (String(asset.file_path || '').startsWith('http') ? asset.file_path : '');\n  const caption = [label[asset.asset_type] || asset.asset_type, asset.caption || '', asset.cta ? 'CTA: ' + asset.cta : '']\n    .filter(Boolean)\n    .join('\\n\\n')\n    .slice(0, 1000);\n  if (!url) {\n    failed.push({ id: asset.id, asset_type: asset.asset_type, reason: 'No public URL in storage_url/file_path' });\n    continue;\n  }\n  requests.push({\n    package_id: pkg.id,\n    kind: 'video',\n    asset_type: asset.asset_type,\n    telegram_url: tgUrl('sendVideo'),\n    telegram_body: { chat_id: chatId, video: url, caption, supports_streaming: true }\n  });\n}\nconst captionLines = videos.map(asset =>\n  [label[asset.asset_type] || asset.asset_type, asset.caption ? 'Caption: ' + asset.caption : '', asset.cta ? 'CTA: ' + asset.cta : '']\n    .filter(Boolean)\n    .join('\\n')\n);\nconst summary = ['Package ready: ' + (pkg.package_date || pkg.id), '', ...captionLines, '', 'Reply: published 1 2 3, revise second, all ok, send links again.']\n  .join('\\n\\n')\n  .slice(0, 3900);\nrequests.push({\n  package_id: pkg.id,\n  kind: 'summary',\n  asset_type: 'summary',\n  telegram_url: tgUrl('sendMessage'),\n  telegram_body: { chat_id: chatId, text: summary }\n});\nif (failed.length) {\n  requests.push({\n    package_id: pkg.id,\n    kind: 'failure_notice',\n    asset_type: 'failure_notice',\n    telegram_url: tgUrl('sendMessage'),\n    telegram_body: { chat_id: chatId, text: 'Some videos failed: ' + failed.map(f => f.asset_type + ': ' + f.reason).join('; ').slice(0, 3200) }\n  });\n}\nreturn requests.map(r => ({ json: r }));"
+          "jsCode": "const token = \"{{TELEGRAM_BOT_TOKEN}}\";\nconst chatId = \"1347534574\";\nconst pkg = $('Code: pick ready package').first().json.package;\nconst assets = $input.all().flatMap(i => Array.isArray(i.json) ? i.json : [i.json]).filter(a => a && a.id);\nconst order = ['reel_close', 'reel_premium', 'reel_viral', 'story'];\nconst label = { reel_close: 'Reel 1 - close pattern', reel_premium: 'Reel 2 - premium', reel_viral: 'Reel 3 - viral', story: 'Story' };\nconst sortedVideos = assets.filter(a => order.includes(a.asset_type)).sort((a, b) => order.indexOf(a.asset_type) - order.indexOf(b.asset_type));\nconst workerBase = 'https://dark-field-8e65.nikitagpt2114.workers.dev';\nconst videos = [];\nconst failed = [];\n\nfunction sourceUrl(asset) {\n  const storage = String(asset.storage_url || '');\n  if (storage.startsWith('http')) return storage;\n  const file = String(asset.file_path || '');\n  if (file.startsWith('http')) return file;\n  return '';\n}\n\nfunction localFilePath(asset) {\n  const file = String(asset.file_path || '');\n  if (file.startsWith('/root/')) return file;\n  return '';\n}\n\nfor (const asset of sortedVideos) {\n  const caption = [label[asset.asset_type] || asset.asset_type, asset.caption || '', asset.cta ? 'CTA: ' + asset.cta : '']\n    .filter(Boolean)\n    .join('\\n\\n')\n    .slice(0, 1000);\n  const filePath = localFilePath(asset);\n  const url = sourceUrl(asset);\n  if (!filePath && !url) {\n    failed.push({ id: asset.id, asset_type: asset.asset_type, reason: 'No local file_path or downloadable URL' });\n    continue;\n  }\n  videos.push({\n    id: asset.id,\n    asset_type: asset.asset_type,\n    file_path: filePath,\n    storage_url: url,\n    caption,\n  });\n}\n\nconst captionLines = sortedVideos.map(asset =>\n  [label[asset.asset_type] || asset.asset_type, asset.caption ? 'Caption: ' + asset.caption : '', asset.cta ? 'CTA: ' + asset.cta : '']\n    .filter(Boolean)\n    .join('\\n')\n);\nconst failureLine = failed.length ? 'Not sent: ' + failed.map(f => f.asset_type + ' - ' + f.reason).join('; ') : '';\nconst summary = ['Package ready: ' + (pkg.package_date || pkg.id), '', ...captionLines, failureLine, '', 'Reply: published 1 2 3, revise second, all ok, send links again.']\n  .filter(Boolean)\n  .join('\\n\\n')\n  .slice(0, 3900);\n\nif (!videos.length) {\n  throw new Error('WF05 has no videos with local file_path or downloadable URL. Failed: ' + JSON.stringify(failed));\n}\n\nreturn [{ json: {\n  package_id: pkg.id,\n  token,\n  chat_id: chatId,\n  worker_base: workerBase,\n  videos,\n  summary_text: summary,\n  video_count: videos.length,\n  failed_count: failed.length,\n} }];"
         }
       },
       {
@@ -626,7 +626,7 @@
         "type": "n8n-nodes-base.httpRequest",
         "typeVersion": 4.4,
         "position": [
-          1700,
+          2040,
           140
         ],
         "parameters": {
@@ -668,7 +668,7 @@
         "type": "n8n-nodes-base.code",
         "typeVersion": 2,
         "position": [
-          1980,
+          2240,
           140
         ],
         "parameters": {
@@ -692,7 +692,7 @@
       },
       {
         "id": "telegram-http-05",
-        "name": "Telegram: send prepared request",
+        "name": "Telegram Relay: send package",
         "type": "n8n-nodes-base.httpRequest",
         "typeVersion": 4.4,
         "position": [
@@ -700,7 +700,7 @@
           140
         ],
         "parameters": {
-          "url": "={{ $json.telegram_url }}",
+          "url": "http://127.0.0.1:8005/send-package",
           "method": "POST",
           "sendHeaders": true,
           "headerParameters": {
@@ -714,9 +714,9 @@
           "sendBody": true,
           "contentType": "raw",
           "rawContentType": "application/json",
-          "body": "={{ JSON.stringify($json.telegram_body) }}",
+          "body": "={{ JSON.stringify($json) }}",
           "options": {
-            "timeout": 120000
+            "timeout": 180000
           }
         },
         "retryOnFail": true,
@@ -734,7 +734,7 @@
         ],
         "parameters": {
           "mode": "runOnceForAllItems",
-          "jsCode": "const built = $('Code: build Telegram requests').all().map(i => i.json);\nconst responses = $input.all().map(i => i.json);\nconst pkg = built[0]?.package_id || $('Code: pick ready package').first().json.package.id;\nreturn [{ json: { package_id: pkg, sent_count: responses.length, requested_count: built.length } }];"
+          "jsCode": "const src = $('Code: build Telegram requests').first().json;\nconst response = $input.first().json;\nif (response.ok !== true) {\n  throw new Error('Telegram relay returned not ok: ' + JSON.stringify(response).slice(0, 1000));\n}\nreturn [{ json: { package_id: src.package_id, sent_count: response.sent_count, video_count: src.video_count, telegram_result: response } }];"
         }
       }
     ],
@@ -827,18 +827,7 @@
         "main": [
           [
             {
-              "node": "Telegram: send prepared request",
-              "type": "main",
-              "index": 0
-            }
-          ]
-        ]
-      },
-      "Telegram: send prepared request": {
-        "main": [
-          [
-            {
-              "node": "Code: Telegram send result",
+              "node": "Telegram Relay: send package",
               "type": "main",
               "index": 0
             }
@@ -855,6 +844,17 @@
             }
           ]
         ]
+      },
+      "Telegram Relay: send package": {
+        "main": [
+          [
+            {
+              "node": "Code: Telegram send result",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
       }
     },
     "authors": "Никита Савин",
@@ -863,18 +863,18 @@
     "autosaved": false,
     "workflowPublishHistory": [
       {
-        "createdAt": "2026-05-14T10:58:52.357Z",
-        "id": 167,
+        "createdAt": "2026-05-14T16:21:48.688Z",
+        "id": 173,
         "workflowId": "NQRIRMhgVQb8OxV2",
-        "versionId": "b039b491-8359-4d35-8cd8-6246c2e0e78e",
+        "versionId": "d82f41ec-03e0-4a7e-8b25-5a5dfc4ff27a",
         "event": "activated",
         "userId": "92e19e2b-362b-418d-8b48-7dcd70395297"
       },
       {
-        "createdAt": "2026-05-14T10:58:52.327Z",
-        "id": 166,
+        "createdAt": "2026-05-14T16:21:48.655Z",
+        "id": 172,
         "workflowId": "NQRIRMhgVQb8OxV2",
-        "versionId": "b039b491-8359-4d35-8cd8-6246c2e0e78e",
+        "versionId": "d82f41ec-03e0-4a7e-8b25-5a5dfc4ff27a",
         "event": "deactivated",
         "userId": "92e19e2b-362b-418d-8b48-7dcd70395297"
       }

@@ -1,6 +1,7 @@
 node_modules/
 .env
 .project-secrets.local.md
+.project-local/
 *.log
 .codex-video-source.mp4
 .codex-video-frames/
