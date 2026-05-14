@@ -1,7 +1,11 @@
 {
+  "updatedAt": "2026-05-14T10:21:05.990Z",
+  "createdAt": "2026-05-13T13:46:08.205Z",
   "id": "Wm9gHnR8qCJIa00D",
   "name": "03 | Variant Factory",
+  "description": null,
   "active": true,
+  "isArchived": false,
   "nodes": [
     {
       "id": "schedule-03",
@@ -58,11 +62,11 @@
           "parameters": [
             {
               "name": "apikey",
-              "value": "SUPABASE_SECRET_KEY"
+              "value": "{{SUPABASE_SERVICE_ROLE_KEY}}"
             },
             {
               "name": "Authorization",
-              "value": "Bearer SUPABASE_SECRET_KEY"
+              "value": "Bearer {{SUPABASE_SERVICE_ROLE_KEY}}"
             },
             {
               "name": "Content-Type",
@@ -132,7 +136,7 @@
       ],
       "parameters": {
         "mode": "runOnceForAllItems",
-        "jsCode": "const pattern = $json.pattern;\nconst recipes = Array.isArray(pattern.pattern_recipes) ? pattern.pattern_recipes : [];\nconst learningRows = Array.isArray(pattern.pattern_performance) ? pattern.pattern_performance : [];\nconst source = {\n  pattern: {\n    id: pattern.id,\n    batch_id: pattern.batch_id,\n    competitor_video_id: pattern.competitor_video_id,\n    hook_pattern: pattern.hook_pattern,\n    visual_pattern: pattern.visual_pattern,\n    scenario_pattern: pattern.scenario_pattern,\n    retention_pattern: pattern.retention_pattern,\n    desire_trigger: pattern.desire_trigger,\n    proof_pattern: pattern.proof_pattern,\n    audio_pattern: pattern.audio_pattern,\n    cta_pattern: pattern.cta_pattern,\n    adaptation_recipe: pattern.adaptation_recipe,\n    forbidden_elements_json: pattern.forbidden_elements_json || [],\n    caution_elements_json: pattern.caution_elements_json || [],\n    pattern_score: pattern.pattern_score,\n    virality_score: pattern.virality_score,\n    premium_score: pattern.premium_score,\n    similarity_score: pattern.similarity_score\n  },\n  recipes: recipes.map(r => ({\n    id: r.id,\n    recipe_type: r.recipe_type,\n    title: r.title,\n    first_frame_formula: r.first_frame_formula,\n    scene_formula_json: r.scene_formula_json || [],\n    screen_text_formula: r.screen_text_formula,\n    audio_formula: r.audio_formula,\n    cta_formula: r.cta_formula,\n    what_to_keep_json: r.what_to_keep_json || [],\n    what_to_change_json: r.what_to_change_json || [],\n    what_not_to_copy_json: r.what_not_to_copy_json || [],\n    usable_for_products_json: r.usable_for_products_json || [],\n    score: r.score\n  })),\n  learning: learningRows.slice(0, 12).map(x => ({\n    views_multiplier: x.views_multiplier,\n    engagement_score: x.engagement_score,\n    lead_score: x.lead_score,\n    learning_result: x.learning_result,\n    weight_delta: x.weight_delta,\n    notes: x.notes\n  }))\n};\nconst schema = {\n  reels: [{\n    group: 'close|viral|premium',\n    number: 1,\n    first_frame: '',\n    hook_text: '',\n    screen_text_json: [],\n    scene_plan_json: [],\n    caption: '',\n    cta: '',\n    viral_mechanism: '',\n    source_pattern_preserved_json: [],\n    uniqueness_moves_json: [],\n    borrowed_elements_json: [],\n    changed_elements_json: [],\n    forbidden_checks_json: [],\n    render_notes: '',\n    ai_video_prompt: ''\n  }],\n  stories: [{\n    number: 1,\n    first_frame: '',\n    hook_text: '',\n    screen_text_json: [],\n    scene_plan_json: [],\n    caption: '',\n    cta: '',\n    viral_mechanism: '',\n    borrowed_elements_json: [],\n    changed_elements_json: [],\n    forbidden_checks_json: []\n  }],\n  captions: [{ group: 'close|viral|premium', caption: '', cta: '', hook_text: '' }]\n};\nconst system = [\n  'You are the top strategist of a viral content factory for premium custom tables.',\n  'Your job is not to invent random ideas. Your job is to transfer the competitor video mechanism into unique, usable, high-retention content.',\n  'Be concrete enough that an editor/render workflow can make the video without asking questions.',\n  'Text fields must be Russian. Return only valid JSON.'\n].join(' ');\nconst user = [\n  'Generate a production-ready content bank from this competitor-derived pattern.',\n  'Main goal: maximum views, retention, virality and leads. Premium feel is important, but virality is priority #1.',\n  'Need exactly 12 Reels: 4 close_to_competitor, 4 more_viral, 4 more_premium.',\n  'Map groups exactly as: close, viral, premium. In each group use 4 different first-frame mechanics, not just different wording.',\n  'Need exactly 4 Story ideas tied to the same pattern.',\n  'Need exactly 3 captions/CTA: one close, one viral, one premium. First paragraph must make people keep reading.',\n  'For close variants: preserve timing, emotion, scene logic and hook mechanism, but change words, product, framing, branding and execution.',\n  'For viral variants: push stronger first 1-2 seconds, conflict/curiosity/proof/payoff, but keep the source pattern readable.',\n  'For premium variants: make the table feel expensive, custom, desirable and gift/status-worthy without becoming boring.',\n  'Respect learning notes: increase what worked, decrease what failed, but never kill an extreme viral mechanism only because it is less premium.',\n  'Forbidden: exact copied text, exact copied frame, third-party logo as key element, face/person as key element, generic motivation, weak CTA, vague scene plan.',\n  'If competitor uses hands/install/body without face, you may keep that type of visual as a safe pattern.',\n  'Every reel must include source_pattern_preserved_json, uniqueness_moves_json, render_notes, and ai_video_prompt. ai_video_prompt must be useful only if WF03.5 later chooses ai_video.',\n  'Return JSON matching this shape:',\n  JSON.stringify(schema),\n  'SOURCE:',\n  JSON.stringify(source)\n].join('\\n');\nreturn [{\n  json: {\n    pattern_id: pattern.id,\n    batch_id: pattern.batch_id,\n    competitor_video_id: pattern.competitor_video_id,\n    recipes,\n    learningRows,\n    polza_body: {\n      model: 'openai/gpt-5.2',\n      messages: [{ role: 'system', content: system }, { role: 'user', content: user }],\n      response_format: { type: 'json_object' },\n      temperature: 0.45\n    }\n  }\n}];"
+        "jsCode": "const pattern = $json.pattern;\nlet testMode = false;\ntry {\n  const webhookBody = $('Webhook: manual WF03').item.json.body || {};\n  testMode = Boolean(webhookBody.test_mode || webhookBody.minimal);\n} catch (e) {}\nconst recipes = Array.isArray(pattern.pattern_recipes) ? pattern.pattern_recipes : [];\nconst learningRows = Array.isArray(pattern.pattern_performance) ? pattern.pattern_performance : [];\nconst source = {\n  pattern: {\n    id: pattern.id,\n    batch_id: pattern.batch_id,\n    competitor_video_id: pattern.competitor_video_id,\n    hook_pattern: pattern.hook_pattern,\n    visual_pattern: pattern.visual_pattern,\n    scenario_pattern: pattern.scenario_pattern,\n    retention_pattern: pattern.retention_pattern,\n    desire_trigger: pattern.desire_trigger,\n    proof_pattern: pattern.proof_pattern,\n    audio_pattern: pattern.audio_pattern,\n    cta_pattern: pattern.cta_pattern,\n    adaptation_recipe: pattern.adaptation_recipe,\n    forbidden_elements_json: pattern.forbidden_elements_json || [],\n    caution_elements_json: pattern.caution_elements_json || [],\n    pattern_score: pattern.pattern_score,\n    virality_score: pattern.virality_score,\n    premium_score: pattern.premium_score,\n    similarity_score: pattern.similarity_score\n  },\n  recipes: recipes.map(r => ({\n    id: r.id,\n    recipe_type: r.recipe_type,\n    title: r.title,\n    first_frame_formula: r.first_frame_formula,\n    scene_formula_json: r.scene_formula_json || [],\n    screen_text_formula: r.screen_text_formula,\n    audio_formula: r.audio_formula,\n    cta_formula: r.cta_formula,\n    what_to_keep_json: r.what_to_keep_json || [],\n    what_to_change_json: r.what_to_change_json || [],\n    what_not_to_copy_json: r.what_not_to_copy_json || [],\n    usable_for_products_json: r.usable_for_products_json || [],\n    score: r.score\n  })),\n  learning: learningRows.slice(0, 12).map(x => ({\n    views_multiplier: x.views_multiplier,\n    engagement_score: x.engagement_score,\n    lead_score: x.lead_score,\n    learning_result: x.learning_result,\n    weight_delta: x.weight_delta,\n    notes: x.notes\n  }))\n};\nconst schema = {\n  reels: [{\n    group: 'close|viral|premium',\n    number: 1,\n    first_frame: '',\n    hook_text: '',\n    screen_text_json: [],\n    scene_plan_json: [],\n    caption: '',\n    cta: '',\n    viral_mechanism: '',\n    source_pattern_preserved_json: [],\n    uniqueness_moves_json: [],\n    borrowed_elements_json: [],\n    changed_elements_json: [],\n    forbidden_checks_json: [],\n    render_notes: '',\n    ai_video_prompt: ''\n  }],\n  stories: [{\n    number: 1,\n    first_frame: '',\n    hook_text: '',\n    screen_text_json: [],\n    scene_plan_json: [],\n    caption: '',\n    cta: '',\n    viral_mechanism: '',\n    borrowed_elements_json: [],\n    changed_elements_json: [],\n    forbidden_checks_json: []\n  }],\n  captions: [{ group: 'close|viral|premium', caption: '', cta: '', hook_text: '' }]\n};\nconst system = [\n  'You are the top strategist of a viral content factory for premium custom tables.',\n  'Your job is not to invent random ideas. Your job is to transfer the competitor video mechanism into unique, usable, high-retention content.',\n  'Be concrete enough that an editor/render workflow can make the video without asking questions.',\n  'Text fields must be Russian. Return only valid JSON.'\n].join(' ');\nconst user = [\n  'Generate a production-ready content bank from this competitor-derived pattern.',\n  'Main goal: maximum views, retention, virality and leads. Premium feel is important, but virality is priority #1.',\n  'Need exactly 12 Reels: 4 close_to_competitor, 4 more_viral, 4 more_premium.',\n  'Map groups exactly as: close, viral, premium. In each group use 4 different first-frame mechanics, not just different wording.',\n  'Need exactly 4 Story ideas tied to the same pattern.',\n  'Need exactly 3 captions/CTA: one close, one viral, one premium. First paragraph must make people keep reading.',\n  'For close variants: preserve timing, emotion, scene logic and hook mechanism, but change words, product, framing, branding and execution.',\n  'For viral variants: push stronger first 1-2 seconds, conflict/curiosity/proof/payoff, but keep the source pattern readable.',\n  'For premium variants: make the table feel expensive, custom, desirable and gift/status-worthy without becoming boring.',\n  'Respect learning notes: increase what worked, decrease what failed, but never kill an extreme viral mechanism only because it is less premium.',\n  'Forbidden: exact copied text, exact copied frame, third-party logo as key element, face/person as key element, generic motivation, weak CTA, vague scene plan.',\n  'If competitor uses hands/install/body without face, you may keep that type of visual as a safe pattern.',\n  'Every reel must include source_pattern_preserved_json, uniqueness_moves_json, render_notes, and ai_video_prompt. ai_video_prompt must be useful only if WF03.5 later chooses ai_video.',\n  'Return JSON matching this shape:',\n  JSON.stringify(schema),\n  'SOURCE:',\n  JSON.stringify(source)\n].join('\\n');\nreturn [{\n  json: {\n    pattern_id: pattern.id,\n    batch_id: pattern.batch_id,\n    competitor_video_id: pattern.competitor_video_id,\n    test_mode: testMode,\n    recipes,\n    learningRows,\n    polza_body: {\n      model: 'openai/gpt-5.2',\n      messages: [{ role: 'system', content: system }, { role: 'user', content: user }],\n      response_format: { type: 'json_object' },\n      temperature: 0.45\n    }\n  }\n}];"
       }
     },
     {
@@ -153,7 +157,7 @@
           "parameters": [
             {
               "name": "Authorization",
-              "value": "Bearer POLZA_API_KEY"
+              "value": "Bearer {{POLZA_API_KEY}}"
             },
             {
               "name": "Content-Type",
@@ -181,7 +185,7 @@
       ],
       "parameters": {
         "mode": "runOnceForAllItems",
-        "jsCode": "const source = $('Code: build variant prompt').item.json;\nconst response = $input.first()?.json || {};\nconst raw = response.choices?.[0]?.message?.content || response.message?.content || response.content || '';\nfunction arr(v) { return Array.isArray(v) ? v : (v == null || v === '' ? [] : [v]); }\nfunction parse(text) {\n  const clean = String(text || '').trim().replace(/^```json\\s*/i, '').replace(/^```\\s*/i, '').replace(/```$/i, '').trim();\n  try { return JSON.parse(clean); } catch (e) {}\n  const start = clean.indexOf('{'); const end = clean.lastIndexOf('}');\n  if (start >= 0 && end > start) return JSON.parse(clean.slice(start, end + 1));\n  throw new Error('Model did not return parseable JSON');\n}\nlet parsed;\ntry { parsed = parse(raw || JSON.stringify(response)); } catch (error) { return [{ json: { ok: false, error: error.message, raw_model_response: String(raw).slice(0, 2500) } }]; }\nconst recipeByGroup = new Map();\nfor (const r of source.recipes || []) {\n  if (r.recipe_type === 'close_to_competitor') recipeByGroup.set('close', r.id);\n  if (r.recipe_type === 'more_viral') recipeByGroup.set('viral', r.id);\n  if (r.recipe_type === 'more_premium') recipeByGroup.set('premium', r.id);\n  if (r.recipe_type === 'story') recipeByGroup.set('story', r.id);\n}\nconst now = new Date().toISOString();\nconst rows = [];\nfunction base(v, group, format, n) {\n  return {\n    batch_id: source.batch_id,\n    pattern_recipe_id: recipeByGroup.get(group) || null,\n    content_pattern_id: source.pattern_id,\n    source_competitor_video_id: source.competitor_video_id,\n    variant_group: group,\n    variant_number: Number(n) || null,\n    format,\n    first_frame: String(v.first_frame || ''),\n    hook_text: String(v.hook_text || ''),\n    screen_text_json: arr(v.screen_text_json),\n    scene_plan_json: arr(v.scene_plan_json),\n    caption: String(v.caption || ''),\n    cta: String(v.cta || ''),\n    source_refs_json: [{ content_pattern_id: source.pattern_id, competitor_video_id: source.competitor_video_id }],\n    borrowed_elements_json: arr(v.borrowed_elements_json),\n    changed_elements_json: arr(v.changed_elements_json),\n    forbidden_checks_json: arr(v.forbidden_checks_json),\n    generation_model: 'openai/gpt-5.2',\n    status: 'idea_created',\n    created_at: now,\n    updated_at: now\n  };\n}\nfor (const [idx, v] of arr(parsed.reels).entries()) {\n  const g = ['close', 'viral', 'premium'].includes(v.group) ? v.group : (idx < 4 ? 'close' : idx < 8 ? 'viral' : 'premium');\n  rows.push(base(v, g, 'reel', v.number || ((idx % 4) + 1)));\n}\nfor (const [idx, v] of arr(parsed.stories).entries()) rows.push(base(v, 'story', 'story', v.number || idx + 1));\nfor (const [idx, v] of arr(parsed.captions).entries()) {\n  const g = ['close', 'viral', 'premium'].includes(v.group) ? v.group : ['close', 'viral', 'premium'][idx % 3];\n  rows.push(base({ ...v, first_frame: '', screen_text_json: [], scene_plan_json: [], borrowed_elements_json: [], changed_elements_json: [], forbidden_checks_json: [] }, g, 'caption', idx + 1));\n}\nreturn [{ json: { ok: true, pattern_id: source.pattern_id, row_count: rows.length, rows } }];"
+        "jsCode": "const source = $('Code: build variant prompt').item.json;\nconst response = $input.first()?.json || {};\nconst raw = response.choices?.[0]?.message?.content || response.message?.content || response.content || '';\nfunction arr(v) { return Array.isArray(v) ? v : (v == null || v === '' ? [] : [v]); }\nfunction parse(text) {\n  const clean = String(text || '').trim().replace(/^```json\\s*/i, '').replace(/^```\\s*/i, '').replace(/```$/i, '').trim();\n  try { return JSON.parse(clean); } catch (e) {}\n  const start = clean.indexOf('{'); const end = clean.lastIndexOf('}');\n  if (start >= 0 && end > start) return JSON.parse(clean.slice(start, end + 1));\n  throw new Error('Model did not return parseable JSON');\n}\nfunction buildTestVariants() {\n  const recipeTitle = (type, fallback) => (source.recipes || []).find(r => r.recipe_type === type)?.title || fallback;\n  const reelGroups = [\n    ['close', 'close_to_competitor', recipeTitle('close_to_competitor', 'source pattern')],\n    ['viral', 'more_viral', recipeTitle('more_viral', 'viral proof pattern')],\n    ['premium', 'more_premium', recipeTitle('more_premium', 'premium detail pattern')]\n  ];\n  const reels = [];\n  for (const [group, recipeType, title] of reelGroups) {\n    for (let i = 1; i <= 4; i++) {\n      reels.push({\n        group,\n        number: i,\n        first_frame: `TEST ${group} ${i}: макро-деталь стола + сильный текст первого кадра`,\n        hook_text: `Тестовый хук ${i}: стол выглядит дороже из-за одной детали`,\n        screen_text_json: [`${title}`, 'деталь -> процесс -> reveal', 'напишите размер'],\n        scene_plan_json: [\n          { t: '0-2', shot: 'макро текстуры/кромки/стыка', purpose: 'стоп-скролл' },\n          { t: '2-7', shot: 'быстрые кадры процесса руками без лиц', purpose: 'доказательство' },\n          { t: '7-12', shot: 'финальный reveal стола в интерьере', purpose: 'желание и CTA' }\n        ],\n        caption: `Тестовое описание для ${group}: покажите размер, материал и одну премиальную деталь. Первый абзац должен удерживать внимание.`,\n        cta: 'Напишите размер в ДМ - подберем вариант стола под интерьер.',\n        viral_mechanism: 'контрастный первый кадр + proof + reveal',\n        source_pattern_preserved_json: ['макро', 'процесс руками', 'финальный reveal'],\n        uniqueness_moves_json: ['другие слова', 'другой ракурс', 'ваш товар'],\n        borrowed_elements_json: ['механика первого кадра', 'темп монтажа'],\n        changed_elements_json: ['брендинг', 'текст', 'конкретный стол'],\n        forbidden_checks_json: ['без чужого логотипа', 'без лиц как ключевого элемента'],\n        render_notes: 'Тестовый fallback без AI-video: собрать через монтаж/оверлеи.',\n        ai_video_prompt: ''\n      });\n    }\n  }\n  const stories = [1,2,3,4].map(i => ({\n    number: i,\n    first_frame: `TEST story ${i}: вопрос по выбору стола`,\n    hook_text: 'Какой стол смотрится дороже?',\n    screen_text_json: ['выберите вариант', 'материал / размер / покрытие'],\n    scene_plan_json: [{ t: '0-5', shot: 'опрос + 2 варианта покрытия' }],\n    caption: 'Тестовая сторис для проверки доставки.',\n    cta: 'Ответьте в сторис или напишите размер в ДМ.',\n    viral_mechanism: 'интерактивный выбор',\n    borrowed_elements_json: ['визуальная механика'],\n    changed_elements_json: ['текст и товар'],\n    forbidden_checks_json: ['без чужого бренда']\n  }));\n  const captions = ['close','viral','premium'].map(group => ({ group, caption: `Тестовое описание ${group}: первый абзац цепляет, дальше материал/размер/CTA.`, cta: 'Напишите размер в ДМ.', hook_text: 'Этот стол меняет ощущение комнаты.' }));\n  return { reels, stories, captions };\n}\nlet parsed;\nif (response.error) {\n  if (!source.test_mode) return [{ json: { ok: false, error: response.error.message || 'Polza request failed', raw_model_response: JSON.stringify(response.error).slice(0, 2500) } }];\n  parsed = buildTestVariants();\n} else {\n  try { parsed = parse(raw || JSON.stringify(response)); } catch (error) {\n    if (!source.test_mode) return [{ json: { ok: false, error: error.message, raw_model_response: String(raw).slice(0, 2500) } }];\n    parsed = buildTestVariants();\n  }\n}\nconst recipeByGroup = new Map();\nfor (const r of source.recipes || []) {\n  if (r.recipe_type === 'close_to_competitor') recipeByGroup.set('close', r.id);\n  if (r.recipe_type === 'more_viral') recipeByGroup.set('viral', r.id);\n  if (r.recipe_type === 'more_premium') recipeByGroup.set('premium', r.id);\n  if (r.recipe_type === 'story') recipeByGroup.set('story', r.id);\n}\nconst now = new Date().toISOString();\nconst rows = [];\nfunction base(v, group, format, n) {\n  return {\n    batch_id: source.batch_id,\n    pattern_recipe_id: recipeByGroup.get(group) || null,\n    content_pattern_id: source.pattern_id,\n    source_competitor_video_id: source.competitor_video_id,\n    variant_group: group,\n    variant_number: Number(n) || null,\n    format,\n    first_frame: String(v.first_frame || ''),\n    hook_text: String(v.hook_text || ''),\n    screen_text_json: arr(v.screen_text_json),\n    scene_plan_json: arr(v.scene_plan_json),\n    caption: String(v.caption || ''),\n    cta: String(v.cta || ''),\n    source_refs_json: [{ content_pattern_id: source.pattern_id, competitor_video_id: source.competitor_video_id }],\n    borrowed_elements_json: arr(v.borrowed_elements_json),\n    changed_elements_json: arr(v.changed_elements_json),\n    forbidden_checks_json: arr(v.forbidden_checks_json),\n    generation_model: 'openai/gpt-5.2',\n    status: 'idea_created',\n    created_at: now,\n    updated_at: now\n  };\n}\nfor (const [idx, v] of arr(parsed.reels).entries()) {\n  const g = ['close', 'viral', 'premium'].includes(v.group) ? v.group : (idx < 4 ? 'close' : idx < 8 ? 'viral' : 'premium');\n  rows.push(base(v, g, 'reel', v.number || ((idx % 4) + 1)));\n}\nfor (const [idx, v] of arr(parsed.stories).entries()) rows.push(base(v, 'story', 'story', v.number || idx + 1));\nfor (const [idx, v] of arr(parsed.captions).entries()) {\n  const g = ['close', 'viral', 'premium'].includes(v.group) ? v.group : ['close', 'viral', 'premium'][idx % 3];\n  rows.push(base({ ...v, first_frame: '', screen_text_json: [], scene_plan_json: [], borrowed_elements_json: [], changed_elements_json: [], forbidden_checks_json: [] }, g, 'caption', idx + 1));\n}\nreturn [{ json: { ok: rows.length > 0, pattern_id: source.pattern_id, row_count: rows.length, rows, error: rows.length ? undefined : 'No variants generated' } }];"
       }
     },
     {
@@ -233,11 +237,11 @@
           "parameters": [
             {
               "name": "apikey",
-              "value": "SUPABASE_SECRET_KEY"
+              "value": "{{SUPABASE_SERVICE_ROLE_KEY}}"
             },
             {
               "name": "Authorization",
-              "value": "Bearer SUPABASE_SECRET_KEY"
+              "value": "Bearer {{SUPABASE_SERVICE_ROLE_KEY}}"
             },
             {
               "name": "Content-Type",
@@ -298,6 +302,52 @@
       "parameters": {
         "mode": "runOnceForAllItems",
         "jsCode": "return [{ json: { action: 'skip', message: 'No generated-ready patterns are waiting for WF03.' } }];"
+      }
+    },
+    {
+      "id": "if-testmode-03",
+      "name": "IF: test mode?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        1350,
+        140
+      ],
+      "parameters": {
+        "conditions": {
+          "combinator": "and",
+          "options": {
+            "version": 2,
+            "leftValue": "",
+            "caseSensitive": true,
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "id": "test-mode",
+              "leftValue": "={{ $json.test_mode }}",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "test-signal-03",
+      "name": "Code: test mode skip Polza",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1535,
+        0
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "return [{ json: { error: { message: 'test_mode_skip_polza' } } }];"
       }
     }
   ],
@@ -364,17 +414,6 @@
         ]
       ]
     },
-    "Code: build variant prompt": {
-      "main": [
-        [
-          {
-            "node": "Polza: GPT-5.2 generate variants",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
     "Polza: GPT-5.2 generate variants": {
       "main": [
         [
@@ -425,6 +464,46 @@
           }
         ]
       ]
+    },
+    "Code: build variant prompt": {
+      "main": [
+        [
+          {
+            "node": "IF: test mode?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "IF: test mode?": {
+      "main": [
+        [
+          {
+            "node": "Code: test mode skip Polza",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Polza: GPT-5.2 generate variants",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code: test mode skip Polza": {
+      "main": [
+        [
+          {
+            "node": "Code: parse variants",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     }
   },
   "settings": {
@@ -436,5 +515,559 @@
     "node:Schedule: generate variants": {
       "recurrenceRules": []
     }
+  },
+  "meta": null,
+  "pinData": null,
+  "versionId": "f0d863aa-6ae0-4661-bb36-8d4ded51bb86",
+  "activeVersionId": "f0d863aa-6ae0-4661-bb36-8d4ded51bb86",
+  "versionCounter": 23,
+  "triggerCount": 2,
+  "shared": [
+    {
+      "updatedAt": "2026-05-13T13:46:08.207Z",
+      "createdAt": "2026-05-13T13:46:08.207Z",
+      "role": "workflow:owner",
+      "workflowId": "Wm9gHnR8qCJIa00D",
+      "projectId": "kn5sRpsS0RRIAD6L",
+      "project": {
+        "updatedAt": "2026-03-29T20:49:11.770Z",
+        "createdAt": "2026-03-29T20:41:19.939Z",
+        "id": "kn5sRpsS0RRIAD6L",
+        "name": "Никита Савин <nikitagpt2114@gmail.com>",
+        "type": "personal",
+        "icon": null,
+        "description": null,
+        "creatorId": "92e19e2b-362b-418d-8b48-7dcd70395297"
+      }
+    }
+  ],
+  "tags": [],
+  "activeVersion": {
+    "updatedAt": "2026-05-14T10:21:05.991Z",
+    "createdAt": "2026-05-14T10:21:05.991Z",
+    "versionId": "f0d863aa-6ae0-4661-bb36-8d4ded51bb86",
+    "workflowId": "Wm9gHnR8qCJIa00D",
+    "nodes": [
+      {
+        "id": "schedule-03",
+        "name": "Schedule: generate variants",
+        "type": "n8n-nodes-base.scheduleTrigger",
+        "typeVersion": 1.2,
+        "position": [
+          0,
+          180
+        ],
+        "parameters": {
+          "rule": {
+            "interval": [
+              {
+                "field": "cronExpression",
+                "expression": "*/30 * * * *"
+              }
+            ]
+          }
+        }
+      },
+      {
+        "id": "manual-webhook-03",
+        "name": "Webhook: manual WF03",
+        "type": "n8n-nodes-base.webhook",
+        "typeVersion": 2,
+        "position": [
+          0,
+          380
+        ],
+        "parameters": {
+          "path": "wf03-variant-factory",
+          "httpMethod": "POST",
+          "responseMode": "lastNode"
+        },
+        "webhookId": "1f25ae95-6019-4d8e-b8ba-e0fef44a2dd9",
+        "onError": "continueRegularOutput"
+      },
+      {
+        "id": "read-pattern-03",
+        "name": "Supabase: read ungenerated pattern",
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.4,
+        "alwaysOutputData": true,
+        "position": [
+          300,
+          280
+        ],
+        "parameters": {
+          "url": "https://xxnzqridvepixzireqjh.supabase.co/rest/v1/content_patterns?select=*,pattern_recipes(*),pattern_performance(views_multiplier,engagement_score,lead_score,learning_result,weight_delta,notes,created_at),content_variants!left(id)&content_variants.id=is.null&order=pattern_score.desc&limit=1",
+          "method": "GET",
+          "sendHeaders": true,
+          "headerParameters": {
+            "parameters": [
+              {
+                "name": "apikey",
+                "value": "{{SUPABASE_SERVICE_ROLE_KEY}}"
+              },
+              {
+                "name": "Authorization",
+                "value": "Bearer {{SUPABASE_SERVICE_ROLE_KEY}}"
+              },
+              {
+                "name": "Content-Type",
+                "value": "application/json"
+              }
+            ]
+          }
+        },
+        "retryOnFail": true,
+        "maxTries": 3,
+        "waitBetweenTries": 5000
+      },
+      {
+        "id": "normalize-pattern-03",
+        "name": "Code: normalize pattern",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          580,
+          280
+        ],
+        "parameters": {
+          "mode": "runOnceForAllItems",
+          "jsCode": "const first = $input.first()?.json;\nconst pattern = Array.isArray(first) ? first[0] : first;\nif (!pattern || !pattern.id) {\n  return [{ json: { has_pattern: false, action: 'no_pattern', message: 'No content_patterns without variants.' } }];\n}\nreturn [{ json: { has_pattern: true, pattern } }];"
+        }
+      },
+      {
+        "id": "if-pattern-03",
+        "name": "IF: has pattern?",
+        "type": "n8n-nodes-base.if",
+        "typeVersion": 2.3,
+        "position": [
+          860,
+          280
+        ],
+        "parameters": {
+          "conditions": {
+            "combinator": "and",
+            "options": {
+              "caseSensitive": true,
+              "leftValue": "",
+              "typeValidation": "strict",
+              "version": 2
+            },
+            "conditions": [
+              {
+                "id": "has-pattern",
+                "leftValue": "={{ $json.has_pattern }}",
+                "operator": {
+                  "type": "boolean",
+                  "operation": "true",
+                  "singleValue": true
+                }
+              }
+            ]
+          }
+        }
+      },
+      {
+        "id": "build-prompt-03",
+        "name": "Code: build variant prompt",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          1140,
+          140
+        ],
+        "parameters": {
+          "mode": "runOnceForAllItems",
+          "jsCode": "const pattern = $json.pattern;\nlet testMode = false;\ntry {\n  const webhookBody = $('Webhook: manual WF03').item.json.body || {};\n  testMode = Boolean(webhookBody.test_mode || webhookBody.minimal);\n} catch (e) {}\nconst recipes = Array.isArray(pattern.pattern_recipes) ? pattern.pattern_recipes : [];\nconst learningRows = Array.isArray(pattern.pattern_performance) ? pattern.pattern_performance : [];\nconst source = {\n  pattern: {\n    id: pattern.id,\n    batch_id: pattern.batch_id,\n    competitor_video_id: pattern.competitor_video_id,\n    hook_pattern: pattern.hook_pattern,\n    visual_pattern: pattern.visual_pattern,\n    scenario_pattern: pattern.scenario_pattern,\n    retention_pattern: pattern.retention_pattern,\n    desire_trigger: pattern.desire_trigger,\n    proof_pattern: pattern.proof_pattern,\n    audio_pattern: pattern.audio_pattern,\n    cta_pattern: pattern.cta_pattern,\n    adaptation_recipe: pattern.adaptation_recipe,\n    forbidden_elements_json: pattern.forbidden_elements_json || [],\n    caution_elements_json: pattern.caution_elements_json || [],\n    pattern_score: pattern.pattern_score,\n    virality_score: pattern.virality_score,\n    premium_score: pattern.premium_score,\n    similarity_score: pattern.similarity_score\n  },\n  recipes: recipes.map(r => ({\n    id: r.id,\n    recipe_type: r.recipe_type,\n    title: r.title,\n    first_frame_formula: r.first_frame_formula,\n    scene_formula_json: r.scene_formula_json || [],\n    screen_text_formula: r.screen_text_formula,\n    audio_formula: r.audio_formula,\n    cta_formula: r.cta_formula,\n    what_to_keep_json: r.what_to_keep_json || [],\n    what_to_change_json: r.what_to_change_json || [],\n    what_not_to_copy_json: r.what_not_to_copy_json || [],\n    usable_for_products_json: r.usable_for_products_json || [],\n    score: r.score\n  })),\n  learning: learningRows.slice(0, 12).map(x => ({\n    views_multiplier: x.views_multiplier,\n    engagement_score: x.engagement_score,\n    lead_score: x.lead_score,\n    learning_result: x.learning_result,\n    weight_delta: x.weight_delta,\n    notes: x.notes\n  }))\n};\nconst schema = {\n  reels: [{\n    group: 'close|viral|premium',\n    number: 1,\n    first_frame: '',\n    hook_text: '',\n    screen_text_json: [],\n    scene_plan_json: [],\n    caption: '',\n    cta: '',\n    viral_mechanism: '',\n    source_pattern_preserved_json: [],\n    uniqueness_moves_json: [],\n    borrowed_elements_json: [],\n    changed_elements_json: [],\n    forbidden_checks_json: [],\n    render_notes: '',\n    ai_video_prompt: ''\n  }],\n  stories: [{\n    number: 1,\n    first_frame: '',\n    hook_text: '',\n    screen_text_json: [],\n    scene_plan_json: [],\n    caption: '',\n    cta: '',\n    viral_mechanism: '',\n    borrowed_elements_json: [],\n    changed_elements_json: [],\n    forbidden_checks_json: []\n  }],\n  captions: [{ group: 'close|viral|premium', caption: '', cta: '', hook_text: '' }]\n};\nconst system = [\n  'You are the top strategist of a viral content factory for premium custom tables.',\n  'Your job is not to invent random ideas. Your job is to transfer the competitor video mechanism into unique, usable, high-retention content.',\n  'Be concrete enough that an editor/render workflow can make the video without asking questions.',\n  'Text fields must be Russian. Return only valid JSON.'\n].join(' ');\nconst user = [\n  'Generate a production-ready content bank from this competitor-derived pattern.',\n  'Main goal: maximum views, retention, virality and leads. Premium feel is important, but virality is priority #1.',\n  'Need exactly 12 Reels: 4 close_to_competitor, 4 more_viral, 4 more_premium.',\n  'Map groups exactly as: close, viral, premium. In each group use 4 different first-frame mechanics, not just different wording.',\n  'Need exactly 4 Story ideas tied to the same pattern.',\n  'Need exactly 3 captions/CTA: one close, one viral, one premium. First paragraph must make people keep reading.',\n  'For close variants: preserve timing, emotion, scene logic and hook mechanism, but change words, product, framing, branding and execution.',\n  'For viral variants: push stronger first 1-2 seconds, conflict/curiosity/proof/payoff, but keep the source pattern readable.',\n  'For premium variants: make the table feel expensive, custom, desirable and gift/status-worthy without becoming boring.',\n  'Respect learning notes: increase what worked, decrease what failed, but never kill an extreme viral mechanism only because it is less premium.',\n  'Forbidden: exact copied text, exact copied frame, third-party logo as key element, face/person as key element, generic motivation, weak CTA, vague scene plan.',\n  'If competitor uses hands/install/body without face, you may keep that type of visual as a safe pattern.',\n  'Every reel must include source_pattern_preserved_json, uniqueness_moves_json, render_notes, and ai_video_prompt. ai_video_prompt must be useful only if WF03.5 later chooses ai_video.',\n  'Return JSON matching this shape:',\n  JSON.stringify(schema),\n  'SOURCE:',\n  JSON.stringify(source)\n].join('\\n');\nreturn [{\n  json: {\n    pattern_id: pattern.id,\n    batch_id: pattern.batch_id,\n    competitor_video_id: pattern.competitor_video_id,\n    test_mode: testMode,\n    recipes,\n    learningRows,\n    polza_body: {\n      model: 'openai/gpt-5.2',\n      messages: [{ role: 'system', content: system }, { role: 'user', content: user }],\n      response_format: { type: 'json_object' },\n      temperature: 0.45\n    }\n  }\n}];"
+        }
+      },
+      {
+        "id": "polza-variants-03",
+        "name": "Polza: GPT-5.2 generate variants",
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.4,
+        "onError": "continueRegularOutput",
+        "position": [
+          1420,
+          140
+        ],
+        "parameters": {
+          "url": "https://polza.ai/api/v1/chat/completions",
+          "method": "POST",
+          "sendHeaders": true,
+          "headerParameters": {
+            "parameters": [
+              {
+                "name": "Authorization",
+                "value": "Bearer {{POLZA_API_KEY}}"
+              },
+              {
+                "name": "Content-Type",
+                "value": "application/json"
+              }
+            ]
+          },
+          "sendBody": true,
+          "contentType": "raw",
+          "rawContentType": "application/json",
+          "body": "={{ JSON.stringify($json.polza_body) }}"
+        },
+        "retryOnFail": true,
+        "maxTries": 2,
+        "waitBetweenTries": 10000
+      },
+      {
+        "id": "parse-variants-03",
+        "name": "Code: parse variants",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          1700,
+          140
+        ],
+        "parameters": {
+          "mode": "runOnceForAllItems",
+          "jsCode": "const source = $('Code: build variant prompt').item.json;\nconst response = $input.first()?.json || {};\nconst raw = response.choices?.[0]?.message?.content || response.message?.content || response.content || '';\nfunction arr(v) { return Array.isArray(v) ? v : (v == null || v === '' ? [] : [v]); }\nfunction parse(text) {\n  const clean = String(text || '').trim().replace(/^```json\\s*/i, '').replace(/^```\\s*/i, '').replace(/```$/i, '').trim();\n  try { return JSON.parse(clean); } catch (e) {}\n  const start = clean.indexOf('{'); const end = clean.lastIndexOf('}');\n  if (start >= 0 && end > start) return JSON.parse(clean.slice(start, end + 1));\n  throw new Error('Model did not return parseable JSON');\n}\nfunction buildTestVariants() {\n  const recipeTitle = (type, fallback) => (source.recipes || []).find(r => r.recipe_type === type)?.title || fallback;\n  const reelGroups = [\n    ['close', 'close_to_competitor', recipeTitle('close_to_competitor', 'source pattern')],\n    ['viral', 'more_viral', recipeTitle('more_viral', 'viral proof pattern')],\n    ['premium', 'more_premium', recipeTitle('more_premium', 'premium detail pattern')]\n  ];\n  const reels = [];\n  for (const [group, recipeType, title] of reelGroups) {\n    for (let i = 1; i <= 4; i++) {\n      reels.push({\n        group,\n        number: i,\n        first_frame: `TEST ${group} ${i}: макро-деталь стола + сильный текст первого кадра`,\n        hook_text: `Тестовый хук ${i}: стол выглядит дороже из-за одной детали`,\n        screen_text_json: [`${title}`, 'деталь -> процесс -> reveal', 'напишите размер'],\n        scene_plan_json: [\n          { t: '0-2', shot: 'макро текстуры/кромки/стыка', purpose: 'стоп-скролл' },\n          { t: '2-7', shot: 'быстрые кадры процесса руками без лиц', purpose: 'доказательство' },\n          { t: '7-12', shot: 'финальный reveal стола в интерьере', purpose: 'желание и CTA' }\n        ],\n        caption: `Тестовое описание для ${group}: покажите размер, материал и одну премиальную деталь. Первый абзац должен удерживать внимание.`,\n        cta: 'Напишите размер в ДМ - подберем вариант стола под интерьер.',\n        viral_mechanism: 'контрастный первый кадр + proof + reveal',\n        source_pattern_preserved_json: ['макро', 'процесс руками', 'финальный reveal'],\n        uniqueness_moves_json: ['другие слова', 'другой ракурс', 'ваш товар'],\n        borrowed_elements_json: ['механика первого кадра', 'темп монтажа'],\n        changed_elements_json: ['брендинг', 'текст', 'конкретный стол'],\n        forbidden_checks_json: ['без чужого логотипа', 'без лиц как ключевого элемента'],\n        render_notes: 'Тестовый fallback без AI-video: собрать через монтаж/оверлеи.',\n        ai_video_prompt: ''\n      });\n    }\n  }\n  const stories = [1,2,3,4].map(i => ({\n    number: i,\n    first_frame: `TEST story ${i}: вопрос по выбору стола`,\n    hook_text: 'Какой стол смотрится дороже?',\n    screen_text_json: ['выберите вариант', 'материал / размер / покрытие'],\n    scene_plan_json: [{ t: '0-5', shot: 'опрос + 2 варианта покрытия' }],\n    caption: 'Тестовая сторис для проверки доставки.',\n    cta: 'Ответьте в сторис или напишите размер в ДМ.',\n    viral_mechanism: 'интерактивный выбор',\n    borrowed_elements_json: ['визуальная механика'],\n    changed_elements_json: ['текст и товар'],\n    forbidden_checks_json: ['без чужого бренда']\n  }));\n  const captions = ['close','viral','premium'].map(group => ({ group, caption: `Тестовое описание ${group}: первый абзац цепляет, дальше материал/размер/CTA.`, cta: 'Напишите размер в ДМ.', hook_text: 'Этот стол меняет ощущение комнаты.' }));\n  return { reels, stories, captions };\n}\nlet parsed;\nif (response.error) {\n  if (!source.test_mode) return [{ json: { ok: false, error: response.error.message || 'Polza request failed', raw_model_response: JSON.stringify(response.error).slice(0, 2500) } }];\n  parsed = buildTestVariants();\n} else {\n  try { parsed = parse(raw || JSON.stringify(response)); } catch (error) {\n    if (!source.test_mode) return [{ json: { ok: false, error: error.message, raw_model_response: String(raw).slice(0, 2500) } }];\n    parsed = buildTestVariants();\n  }\n}\nconst recipeByGroup = new Map();\nfor (const r of source.recipes || []) {\n  if (r.recipe_type === 'close_to_competitor') recipeByGroup.set('close', r.id);\n  if (r.recipe_type === 'more_viral') recipeByGroup.set('viral', r.id);\n  if (r.recipe_type === 'more_premium') recipeByGroup.set('premium', r.id);\n  if (r.recipe_type === 'story') recipeByGroup.set('story', r.id);\n}\nconst now = new Date().toISOString();\nconst rows = [];\nfunction base(v, group, format, n) {\n  return {\n    batch_id: source.batch_id,\n    pattern_recipe_id: recipeByGroup.get(group) || null,\n    content_pattern_id: source.pattern_id,\n    source_competitor_video_id: source.competitor_video_id,\n    variant_group: group,\n    variant_number: Number(n) || null,\n    format,\n    first_frame: String(v.first_frame || ''),\n    hook_text: String(v.hook_text || ''),\n    screen_text_json: arr(v.screen_text_json),\n    scene_plan_json: arr(v.scene_plan_json),\n    caption: String(v.caption || ''),\n    cta: String(v.cta || ''),\n    source_refs_json: [{ content_pattern_id: source.pattern_id, competitor_video_id: source.competitor_video_id }],\n    borrowed_elements_json: arr(v.borrowed_elements_json),\n    changed_elements_json: arr(v.changed_elements_json),\n    forbidden_checks_json: arr(v.forbidden_checks_json),\n    generation_model: 'openai/gpt-5.2',\n    status: 'idea_created',\n    created_at: now,\n    updated_at: now\n  };\n}\nfor (const [idx, v] of arr(parsed.reels).entries()) {\n  const g = ['close', 'viral', 'premium'].includes(v.group) ? v.group : (idx < 4 ? 'close' : idx < 8 ? 'viral' : 'premium');\n  rows.push(base(v, g, 'reel', v.number || ((idx % 4) + 1)));\n}\nfor (const [idx, v] of arr(parsed.stories).entries()) rows.push(base(v, 'story', 'story', v.number || idx + 1));\nfor (const [idx, v] of arr(parsed.captions).entries()) {\n  const g = ['close', 'viral', 'premium'].includes(v.group) ? v.group : ['close', 'viral', 'premium'][idx % 3];\n  rows.push(base({ ...v, first_frame: '', screen_text_json: [], scene_plan_json: [], borrowed_elements_json: [], changed_elements_json: [], forbidden_checks_json: [] }, g, 'caption', idx + 1));\n}\nreturn [{ json: { ok: rows.length > 0, pattern_id: source.pattern_id, row_count: rows.length, rows, error: rows.length ? undefined : 'No variants generated' } }];"
+        }
+      },
+      {
+        "id": "if-parsed-03",
+        "name": "IF: variants parsed?",
+        "type": "n8n-nodes-base.if",
+        "typeVersion": 2.3,
+        "position": [
+          1980,
+          140
+        ],
+        "parameters": {
+          "conditions": {
+            "combinator": "and",
+            "options": {
+              "caseSensitive": true,
+              "leftValue": "",
+              "typeValidation": "strict",
+              "version": 2
+            },
+            "conditions": [
+              {
+                "id": "variants-ok",
+                "leftValue": "={{ $json.ok }}",
+                "operator": {
+                  "type": "boolean",
+                  "operation": "true",
+                  "singleValue": true
+                }
+              }
+            ]
+          }
+        }
+      },
+      {
+        "id": "insert-variants-03",
+        "name": "Supabase: insert content variants",
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.4,
+        "position": [
+          2260,
+          20
+        ],
+        "parameters": {
+          "url": "https://xxnzqridvepixzireqjh.supabase.co/rest/v1/content_variants",
+          "method": "POST",
+          "sendHeaders": true,
+          "headerParameters": {
+            "parameters": [
+              {
+                "name": "apikey",
+                "value": "{{SUPABASE_SERVICE_ROLE_KEY}}"
+              },
+              {
+                "name": "Authorization",
+                "value": "Bearer {{SUPABASE_SERVICE_ROLE_KEY}}"
+              },
+              {
+                "name": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "name": "Prefer",
+                "value": "return=representation"
+              }
+            ]
+          },
+          "sendBody": true,
+          "contentType": "raw",
+          "rawContentType": "application/json",
+          "body": "={{ JSON.stringify($json.rows) }}"
+        },
+        "retryOnFail": true,
+        "maxTries": 3,
+        "waitBetweenTries": 5000
+      },
+      {
+        "id": "result-03",
+        "name": "Code: variants created result",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          2540,
+          20
+        ],
+        "parameters": {
+          "mode": "runOnceForAllItems",
+          "jsCode": "const inserted = $input.first()?.json;\nconst rows = Array.isArray(inserted) ? inserted : [inserted].filter(Boolean);\nreturn [{ json: { action: 'variants_created', inserted_count: rows.length, message: `WF03 created ${rows.length} content_variants.` } }];"
+        }
+      },
+      {
+        "id": "parse-failed-03",
+        "name": "Code: variant generation failed",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          2260,
+          260
+        ],
+        "parameters": {
+          "mode": "runOnceForAllItems",
+          "jsCode": "return [{ json: { action: 'variant_generation_failed', error: $json.error || 'Unknown WF03 generation error' } }];"
+        }
+      },
+      {
+        "id": "no-pattern-03",
+        "name": "Code: no pattern",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          1140,
+          420
+        ],
+        "parameters": {
+          "mode": "runOnceForAllItems",
+          "jsCode": "return [{ json: { action: 'skip', message: 'No generated-ready patterns are waiting for WF03.' } }];"
+        }
+      },
+      {
+        "id": "if-testmode-03",
+        "name": "IF: test mode?",
+        "type": "n8n-nodes-base.if",
+        "typeVersion": 2.3,
+        "position": [
+          1350,
+          140
+        ],
+        "parameters": {
+          "conditions": {
+            "combinator": "and",
+            "options": {
+              "version": 2,
+              "leftValue": "",
+              "caseSensitive": true,
+              "typeValidation": "strict"
+            },
+            "conditions": [
+              {
+                "id": "test-mode",
+                "leftValue": "={{ $json.test_mode }}",
+                "operator": {
+                  "type": "boolean",
+                  "operation": "true",
+                  "singleValue": true
+                }
+              }
+            ]
+          }
+        }
+      },
+      {
+        "id": "test-signal-03",
+        "name": "Code: test mode skip Polza",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          1535,
+          0
+        ],
+        "parameters": {
+          "mode": "runOnceForAllItems",
+          "jsCode": "return [{ json: { error: { message: 'test_mode_skip_polza' } } }];"
+        }
+      }
+    ],
+    "connections": {
+      "Schedule: generate variants": {
+        "main": [
+          [
+            {
+              "node": "Supabase: read ungenerated pattern",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Webhook: manual WF03": {
+        "main": [
+          [
+            {
+              "node": "Supabase: read ungenerated pattern",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Supabase: read ungenerated pattern": {
+        "main": [
+          [
+            {
+              "node": "Code: normalize pattern",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Code: normalize pattern": {
+        "main": [
+          [
+            {
+              "node": "IF: has pattern?",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "IF: has pattern?": {
+        "main": [
+          [
+            {
+              "node": "Code: build variant prompt",
+              "type": "main",
+              "index": 0
+            }
+          ],
+          [
+            {
+              "node": "Code: no pattern",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Polza: GPT-5.2 generate variants": {
+        "main": [
+          [
+            {
+              "node": "Code: parse variants",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Code: parse variants": {
+        "main": [
+          [
+            {
+              "node": "IF: variants parsed?",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "IF: variants parsed?": {
+        "main": [
+          [
+            {
+              "node": "Supabase: insert content variants",
+              "type": "main",
+              "index": 0
+            }
+          ],
+          [
+            {
+              "node": "Code: variant generation failed",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Supabase: insert content variants": {
+        "main": [
+          [
+            {
+              "node": "Code: variants created result",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Code: build variant prompt": {
+        "main": [
+          [
+            {
+              "node": "IF: test mode?",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "IF: test mode?": {
+        "main": [
+          [
+            {
+              "node": "Code: test mode skip Polza",
+              "type": "main",
+              "index": 0
+            }
+          ],
+          [
+            {
+              "node": "Polza: GPT-5.2 generate variants",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Code: test mode skip Polza": {
+        "main": [
+          [
+            {
+              "node": "Code: parse variants",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      }
+    },
+    "authors": "Никита Савин",
+    "name": null,
+    "description": null,
+    "autosaved": false,
+    "workflowPublishHistory": [
+      {
+        "createdAt": "2026-05-14T10:21:06.084Z",
+        "id": 153,
+        "workflowId": "Wm9gHnR8qCJIa00D",
+        "versionId": "f0d863aa-6ae0-4661-bb36-8d4ded51bb86",
+        "event": "activated",
+        "userId": "92e19e2b-362b-418d-8b48-7dcd70395297"
+      },
+      {
+        "createdAt": "2026-05-14T10:21:06.046Z",
+        "id": 152,
+        "workflowId": "Wm9gHnR8qCJIa00D",
+        "versionId": "f0d863aa-6ae0-4661-bb36-8d4ded51bb86",
+        "event": "deactivated",
+        "userId": "92e19e2b-362b-418d-8b48-7dcd70395297"
+      }
+    ]
   }
 }

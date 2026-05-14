@@ -1,7 +1,11 @@
 {
+  "updatedAt": "2026-05-13T18:31:03.293Z",
+  "createdAt": "2026-05-13T14:18:48.400Z",
   "id": "A08giAKYArdNqDqB",
   "name": "05.5 | Telegram Feedback Parser",
+  "description": null,
   "active": true,
+  "isArchived": false,
   "nodes": [
     {
       "id": "wh-055",
@@ -37,11 +41,11 @@
           "parameters": [
             {
               "name": "apikey",
-              "value": "SUPABASE_SECRET_KEY"
+              "value": "{{SUPABASE_SERVICE_ROLE_KEY}}"
             },
             {
               "name": "Authorization",
-              "value": "Bearer SUPABASE_SECRET_KEY"
+              "value": "Bearer {{SUPABASE_SERVICE_ROLE_KEY}}"
             },
             {
               "name": "Content-Type",
@@ -86,7 +90,7 @@
           "parameters": [
             {
               "name": "Authorization",
-              "value": "Bearer POLZA_API_KEY"
+              "value": "Bearer {{POLZA_API_KEY}}"
             },
             {
               "name": "Content-Type",
@@ -134,11 +138,11 @@
           "parameters": [
             {
               "name": "apikey",
-              "value": "SUPABASE_SECRET_KEY"
+              "value": "{{SUPABASE_SERVICE_ROLE_KEY}}"
             },
             {
               "name": "Authorization",
-              "value": "Bearer SUPABASE_SECRET_KEY"
+              "value": "Bearer {{SUPABASE_SERVICE_ROLE_KEY}}"
             },
             {
               "name": "Content-Type",
@@ -222,11 +226,11 @@
           "parameters": [
             {
               "name": "apikey",
-              "value": "SUPABASE_SECRET_KEY"
+              "value": "{{SUPABASE_SERVICE_ROLE_KEY}}"
             },
             {
               "name": "Authorization",
-              "value": "Bearer SUPABASE_SECRET_KEY"
+              "value": "Bearer {{SUPABASE_SERVICE_ROLE_KEY}}"
             },
             {
               "name": "Content-Type",
@@ -278,11 +282,11 @@
           "parameters": [
             {
               "name": "apikey",
-              "value": "SUPABASE_SECRET_KEY"
+              "value": "{{SUPABASE_SERVICE_ROLE_KEY}}"
             },
             {
               "name": "Authorization",
-              "value": "Bearer SUPABASE_SECRET_KEY"
+              "value": "Bearer {{SUPABASE_SERVICE_ROLE_KEY}}"
             },
             {
               "name": "Content-Type",
@@ -326,11 +330,11 @@
           "parameters": [
             {
               "name": "apikey",
-              "value": "SUPABASE_SECRET_KEY"
+              "value": "{{SUPABASE_SERVICE_ROLE_KEY}}"
             },
             {
               "name": "Authorization",
-              "value": "Bearer SUPABASE_SECRET_KEY"
+              "value": "Bearer {{SUPABASE_SERVICE_ROLE_KEY}}"
             },
             {
               "name": "Content-Type",
@@ -414,11 +418,11 @@
           "parameters": [
             {
               "name": "apikey",
-              "value": "SUPABASE_SECRET_KEY"
+              "value": "{{SUPABASE_SERVICE_ROLE_KEY}}"
             },
             {
               "name": "Authorization",
-              "value": "Bearer SUPABASE_SECRET_KEY"
+              "value": "Bearer {{SUPABASE_SERVICE_ROLE_KEY}}"
             },
             {
               "name": "Content-Type",
@@ -456,11 +460,11 @@
           "parameters": [
             {
               "name": "apikey",
-              "value": "SUPABASE_SECRET_KEY"
+              "value": "{{SUPABASE_SERVICE_ROLE_KEY}}"
             },
             {
               "name": "Authorization",
-              "value": "Bearer SUPABASE_SECRET_KEY"
+              "value": "Bearer {{SUPABASE_SERVICE_ROLE_KEY}}"
             },
             {
               "name": "Content-Type",
@@ -682,5 +686,734 @@
     "callerPolicy": "workflowsFromSameOwner",
     "availableInMCP": false
   },
-  "staticData": null
+  "staticData": null,
+  "meta": null,
+  "pinData": null,
+  "versionId": "5b8b174d-63fe-427a-9ef5-3f67ebd15b1f",
+  "activeVersionId": "5b8b174d-63fe-427a-9ef5-3f67ebd15b1f",
+  "versionCounter": 35,
+  "triggerCount": 1,
+  "shared": [
+    {
+      "updatedAt": "2026-05-13T14:18:48.402Z",
+      "createdAt": "2026-05-13T14:18:48.402Z",
+      "role": "workflow:owner",
+      "workflowId": "A08giAKYArdNqDqB",
+      "projectId": "kn5sRpsS0RRIAD6L",
+      "project": {
+        "updatedAt": "2026-03-29T20:49:11.770Z",
+        "createdAt": "2026-03-29T20:41:19.939Z",
+        "id": "kn5sRpsS0RRIAD6L",
+        "name": "Никита Савин <nikitagpt2114@gmail.com>",
+        "type": "personal",
+        "icon": null,
+        "description": null,
+        "creatorId": "92e19e2b-362b-418d-8b48-7dcd70395297"
+      }
+    }
+  ],
+  "tags": [],
+  "activeVersion": {
+    "updatedAt": "2026-05-13T18:31:03.294Z",
+    "createdAt": "2026-05-13T18:31:03.294Z",
+    "versionId": "5b8b174d-63fe-427a-9ef5-3f67ebd15b1f",
+    "workflowId": "A08giAKYArdNqDqB",
+    "nodes": [
+      {
+        "id": "wh-055",
+        "name": "Webhook: Telegram feedback",
+        "type": "n8n-nodes-base.webhook",
+        "typeVersion": 2,
+        "position": [
+          0,
+          240
+        ],
+        "parameters": {
+          "path": "wf055-feedback",
+          "httpMethod": "POST",
+          "responseMode": "lastNode"
+        },
+        "webhookId": "8a4158d9-706d-4df2-a2bd-2d0a7e5c4a93",
+        "onError": "continueRegularOutput"
+      },
+      {
+        "id": "readp-055",
+        "name": "Supabase: read latest package",
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.4,
+        "position": [
+          300,
+          240
+        ],
+        "parameters": {
+          "url": "https://xxnzqridvepixzireqjh.supabase.co/rest/v1/daily_packages?select=*&status=in.(delivered,ready,needs_revision,partially_published)&order=created_at.desc&limit=1",
+          "method": "GET",
+          "sendHeaders": true,
+          "headerParameters": {
+            "parameters": [
+              {
+                "name": "apikey",
+                "value": "{{SUPABASE_SERVICE_ROLE_KEY}}"
+              },
+              {
+                "name": "Authorization",
+                "value": "Bearer {{SUPABASE_SERVICE_ROLE_KEY}}"
+              },
+              {
+                "name": "Content-Type",
+                "value": "application/json"
+              }
+            ]
+          }
+        },
+        "alwaysOutputData": true,
+        "retryOnFail": true,
+        "maxTries": 3,
+        "waitBetweenTries": 5000
+      },
+      {
+        "id": "build-llm-055",
+        "name": "Code: build feedback LLM prompt",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          580,
+          280
+        ],
+        "parameters": {
+          "mode": "runOnceForAllItems",
+          "jsCode": "const body = $('Webhook: Telegram feedback').item.json.body || {};\nconst msg = body.message?.text || body.text || body.message || JSON.stringify(body);\nconst pkg = Array.isArray($input.first()?.json) ? $input.first().json[0] : $input.first()?.json;\nconst system = [\n  'You parse short natural Russian Telegram commands for a content factory owner.',\n  'Understand profanity, typos, mixed Russian/English, and casual phrases.',\n  'Supported intents: published, revise, approve, reject, archive, ask_status, resend_links. Use revise when the user asks to fix background, text, hook, music, cheap look, wrong vibe, bad video, or says to redo.',\n  'Extract target assets if mentioned: reel_1, reel_2, reel_3, story, all, or unknown. If target is unclear for revise, use all and explain the requested change in change_request.',\n  'If user says the post was published, intent=published. If they complain about background/text/cheap look/hook/music/video, intent=revise.',\n  'If confidence is low, use ask_status and explain briefly.',\n  'Return only valid JSON.'\n].join(' ');\nconst schema = {\n  intent: 'published|revise|approve|reject|archive|ask_status|resend_links',\n  target_assets: [],\n  change_request: '',\n  feedback_tags: [],\n  confidence: 0,\n  should_create_published_posts: false,\n  needs_clarification: false,\n  short_reply: ''\n};\nconst user = [\n  'Latest package context:',\n  JSON.stringify({daily_package_id: pkg?.id || null, status: pkg?.status || null, package_date: pkg?.package_date || null}),\n  'Message:',\n  msg,\n  'Return JSON matching schema:',\n  JSON.stringify(schema)\n].join('\\n');\nreturn [{ json: { daily_package_id: pkg?.id || null, raw_message: msg, polza_body: { model: 'openai/gpt-5.2', temperature: 0.1, response_format: { type: 'json_object' }, messages: [{ role: 'system', content: system }, { role: 'user', content: user }] } } }];"
+        }
+      },
+      {
+        "id": "polza-055",
+        "name": "Polza: GPT-5.2 parse feedback",
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.4,
+        "position": [
+          860,
+          280
+        ],
+        "parameters": {
+          "url": "https://polza.ai/api/v1/chat/completions",
+          "method": "POST",
+          "sendHeaders": true,
+          "headerParameters": {
+            "parameters": [
+              {
+                "name": "Authorization",
+                "value": "Bearer {{POLZA_API_KEY}}"
+              },
+              {
+                "name": "Content-Type",
+                "value": "application/json"
+              }
+            ]
+          },
+          "sendBody": true,
+          "contentType": "raw",
+          "rawContentType": "application/json",
+          "body": "={{ JSON.stringify($json.polza_body) }}"
+        },
+        "retryOnFail": true,
+        "maxTries": 2,
+        "waitBetweenTries": 10000
+      },
+      {
+        "id": "parse-llm-055",
+        "name": "Code: parse feedback LLM",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          1140,
+          280
+        ],
+        "parameters": {
+          "mode": "runOnceForAllItems",
+          "jsCode": "const source = $('Code: build feedback LLM prompt').first().json;\nconst response = $input.first()?.json || {};\nconst raw = response.choices?.[0]?.message?.content || response.message?.content || response.content || '';\nfunction parseJson(text) {\n  const clean = String(text || '').trim().replace(/^\\`\\`\\`json\\s*/i, '').replace(/^\\`\\`\\`\\s*/i, '').replace(/\\`\\`\\`$/i, '').trim();\n  try { return JSON.parse(clean); } catch (e) {}\n  const start = clean.indexOf('{'); const end = clean.lastIndexOf('}');\n  if (start >= 0 && end > start) return JSON.parse(clean.slice(start, end + 1));\n  throw new Error('No JSON');\n}\nfunction localFallback(msg) {\n  const s = String(msg || '').toLowerCase();\n  let intent = 'ask_status';\n  if (s.includes('опубликов') || s.includes('published') || s.includes('выложил') || s.includes('залил')) intent = 'published';\n  else if (s.includes('исправ') || s.includes('плохо') || s.includes('замени') || s.includes('передел') || s.includes('фон')) intent = 'revise';\n  else if (s.includes('одобр') || s === 'ок' || s.includes('approve') || s.includes('все ок') || s.includes('всё ок')) intent = 'approve';\n  else if (s.includes('ссылк') || s.includes('еще раз') || s.includes('ещё раз')) intent = 'resend_links';\n  return { intent, target_assets: [], change_request: intent === 'revise' ? msg : '', feedback_tags: [intent], confidence: 0.65, needs_clarification: false, short_reply: '' };\n}\nlet parsed;\ntry { parsed = parseJson(raw); } catch (e) { parsed = localFallback(source.raw_message); }\nconst intent = parsed.intent || parsed.parsed_intent || 'ask_status';\nconst tags = Array.isArray(parsed.feedback_tags) ? parsed.feedback_tags : [intent];\nconst targets = Array.isArray(parsed.target_assets) ? parsed.target_assets : [];\nif (targets.length) tags.push('targets:' + targets.join(','));\nif (parsed.needs_clarification) tags.push('needs_clarification');\nif (parsed.short_reply) tags.push('reply:' + String(parsed.short_reply).slice(0, 300));\nreturn [{\n  json: {\n    daily_package_id: source.daily_package_id,\n    raw_message: source.raw_message,\n    parsed_intent: intent,\n    target_asset_type: targets[0] || null,\n    target_index: null,\n    change_request: parsed.change_request || (intent === 'revise' ? source.raw_message : null),\n    feedback_tags_json: tags,\n    parser_model: raw ? 'openai/gpt-5.2' : 'local-fallback',\n    parser_confidence: Math.max(0, Math.min(1, Number(parsed.confidence || 0.7))),\n    used_for_learning: false\n  }\n}];"
+        }
+      },
+      {
+        "id": "insf-055",
+        "name": "Supabase: insert feedback",
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.4,
+        "position": [
+          860,
+          240
+        ],
+        "parameters": {
+          "url": "https://xxnzqridvepixzireqjh.supabase.co/rest/v1/content_feedback",
+          "method": "POST",
+          "sendHeaders": true,
+          "headerParameters": {
+            "parameters": [
+              {
+                "name": "apikey",
+                "value": "{{SUPABASE_SERVICE_ROLE_KEY}}"
+              },
+              {
+                "name": "Authorization",
+                "value": "Bearer {{SUPABASE_SERVICE_ROLE_KEY}}"
+              },
+              {
+                "name": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "name": "Prefer",
+                "value": "return=representation"
+              }
+            ]
+          },
+          "sendBody": true,
+          "contentType": "raw",
+          "rawContentType": "application/json",
+          "body": "={{ JSON.stringify($json) }}"
+        },
+        "retryOnFail": true,
+        "maxTries": 3,
+        "waitBetweenTries": 5000
+      },
+      {
+        "id": "pub-055",
+        "name": "Code: build publish update",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          1140,
+          240
+        ],
+        "parameters": {
+          "mode": "runOnceForAllItems",
+          "jsCode": "const f = Array.isArray($input.first().json) ? $input.first().json[0] : $input.first().json;\nconst intent = f.parsed_intent || 'ask_status';\nreturn [{\n  json: {\n    feedback: f,\n    intent,\n    is_published: intent === 'published',\n    is_revision: intent === 'revise',\n    is_approved: intent === 'approve'\n  }\n}];"
+        }
+      },
+      {
+        "id": "ifpub-055",
+        "name": "IF: published?",
+        "type": "n8n-nodes-base.if",
+        "typeVersion": 2.3,
+        "position": [
+          1420,
+          240
+        ],
+        "parameters": {
+          "conditions": {
+            "combinator": "and",
+            "options": {
+              "caseSensitive": true,
+              "leftValue": "",
+              "typeValidation": "strict",
+              "version": 2
+            },
+            "conditions": [
+              {
+                "id": "ok",
+                "leftValue": "={{ $json.is_published }}",
+                "operator": {
+                  "type": "boolean",
+                  "operation": "true",
+                  "singleValue": true
+                }
+              }
+            ]
+          }
+        }
+      },
+      {
+        "id": "patchpub-055",
+        "name": "Supabase: mark package published",
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.4,
+        "position": [
+          1700,
+          120
+        ],
+        "parameters": {
+          "url": "={{ 'https://xxnzqridvepixzireqjh.supabase.co/rest/v1/daily_packages?id=eq.' + $json.feedback.daily_package_id }}",
+          "method": "PATCH",
+          "sendHeaders": true,
+          "headerParameters": {
+            "parameters": [
+              {
+                "name": "apikey",
+                "value": "{{SUPABASE_SERVICE_ROLE_KEY}}"
+              },
+              {
+                "name": "Authorization",
+                "value": "Bearer {{SUPABASE_SERVICE_ROLE_KEY}}"
+              },
+              {
+                "name": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "name": "Prefer",
+                "value": "return=representation"
+              }
+            ]
+          },
+          "sendBody": true,
+          "contentType": "raw",
+          "rawContentType": "application/json",
+          "body": "={{ JSON.stringify({status:'published',updated_at:new Date().toISOString()}) }}"
+        },
+        "retryOnFail": true,
+        "maxTries": 3,
+        "waitBetweenTries": 5000
+      },
+      {
+        "id": "donefb-055",
+        "name": "Code: feedback saved",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          1700,
+          360
+        ],
+        "parameters": {
+          "mode": "runOnceForAllItems",
+          "jsCode": "return [{ json: { action: 'feedback_saved', message: 'Feedback saved.' } }];"
+        }
+      },
+      {
+        "id": "readassets-055",
+        "name": "Supabase: read published package assets",
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.4,
+        "position": [
+          1980,
+          120
+        ],
+        "parameters": {
+          "url": "={{ 'https://xxnzqridvepixzireqjh.supabase.co/rest/v1/package_assets?select=*&daily_package_id=eq.' + $('Code: build publish update').item.json.feedback.daily_package_id + '&asset_type=in.(reel_close,reel_premium,reel_viral,story)' }}",
+          "method": "GET",
+          "sendHeaders": true,
+          "headerParameters": {
+            "parameters": [
+              {
+                "name": "apikey",
+                "value": "{{SUPABASE_SERVICE_ROLE_KEY}}"
+              },
+              {
+                "name": "Authorization",
+                "value": "Bearer {{SUPABASE_SERVICE_ROLE_KEY}}"
+              },
+              {
+                "name": "Content-Type",
+                "value": "application/json"
+              }
+            ]
+          }
+        },
+        "retryOnFail": true,
+        "maxTries": 3,
+        "waitBetweenTries": 5000
+      },
+      {
+        "id": "buildposts-055",
+        "name": "Code: build published posts",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          2260,
+          120
+        ],
+        "parameters": {
+          "mode": "runOnceForAllItems",
+          "jsCode": "const feedback = $('Code: build publish update').item.json.feedback;\nconst assets = $input.all().flatMap(i => Array.isArray(i.json) ? i.json : [i.json]).filter(a => a && a.id);\nconst now = new Date().toISOString();\nconst rows = assets.map(a => ({\n  daily_package_id: feedback.daily_package_id,\n  package_asset_id: a.id,\n  platform: 'instagram',\n  user_reported_published_at: now,\n  success_level: 'unknown',\n  created_at: now,\n  updated_at: now\n}));\nreturn [{ json: { rows } }];"
+        }
+      },
+      {
+        "id": "insertposts-055",
+        "name": "Supabase: insert published posts",
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.4,
+        "position": [
+          2540,
+          120
+        ],
+        "parameters": {
+          "url": "https://xxnzqridvepixzireqjh.supabase.co/rest/v1/published_posts",
+          "method": "POST",
+          "sendHeaders": true,
+          "headerParameters": {
+            "parameters": [
+              {
+                "name": "apikey",
+                "value": "{{SUPABASE_SERVICE_ROLE_KEY}}"
+              },
+              {
+                "name": "Authorization",
+                "value": "Bearer {{SUPABASE_SERVICE_ROLE_KEY}}"
+              },
+              {
+                "name": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "name": "Prefer",
+                "value": "return=representation"
+              }
+            ]
+          },
+          "sendBody": true,
+          "contentType": "raw",
+          "rawContentType": "application/json",
+          "body": "={{ JSON.stringify($json.rows) }}"
+        },
+        "retryOnFail": true,
+        "maxTries": 3,
+        "waitBetweenTries": 5000
+      },
+      {
+        "id": "donepub2-055",
+        "name": "Code: published posts result",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          2820,
+          120
+        ],
+        "parameters": {
+          "mode": "runOnceForAllItems",
+          "jsCode": "const rows = Array.isArray($input.first()?.json) ? $input.first().json : [];\nreturn [{ json: { action: 'feedback_saved', published_posts_created: rows.length, message: 'Feedback saved; package marked published and published_posts created.' } }];"
+        }
+      },
+      {
+        "id": "ifrev-055",
+        "name": "IF: revision requested?",
+        "type": "n8n-nodes-base.if",
+        "typeVersion": 2.3,
+        "position": [
+          1700,
+          360
+        ],
+        "parameters": {
+          "conditions": {
+            "combinator": "and",
+            "options": {
+              "version": 2,
+              "leftValue": "",
+              "caseSensitive": true,
+              "typeValidation": "strict"
+            },
+            "conditions": [
+              {
+                "id": "revision",
+                "leftValue": "={{ $json.is_revision }}",
+                "operator": {
+                  "type": "boolean",
+                  "operation": "true",
+                  "singleValue": true
+                }
+              }
+            ]
+          }
+        }
+      },
+      {
+        "id": "patchrevpkg-055",
+        "name": "Supabase: mark package needs revision",
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.4,
+        "position": [
+          1980,
+          300
+        ],
+        "parameters": {
+          "url": "={{ 'https://xxnzqridvepixzireqjh.supabase.co/rest/v1/daily_packages?id=eq.' + $json.feedback.daily_package_id }}",
+          "method": "PATCH",
+          "sendHeaders": true,
+          "headerParameters": {
+            "parameters": [
+              {
+                "name": "apikey",
+                "value": "{{SUPABASE_SERVICE_ROLE_KEY}}"
+              },
+              {
+                "name": "Authorization",
+                "value": "Bearer {{SUPABASE_SERVICE_ROLE_KEY}}"
+              },
+              {
+                "name": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "name": "Prefer",
+                "value": "return=representation"
+              }
+            ]
+          },
+          "sendBody": true,
+          "contentType": "raw",
+          "rawContentType": "application/json",
+          "body": "={{ JSON.stringify({status:'needs_revision',updated_at:new Date().toISOString()}) }}"
+        },
+        "retryOnFail": true,
+        "maxTries": 3,
+        "waitBetweenTries": 5000
+      },
+      {
+        "id": "patchrevassets-055",
+        "name": "Supabase: reset package assets for revision",
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.4,
+        "position": [
+          2260,
+          300
+        ],
+        "parameters": {
+          "url": "={{ 'https://xxnzqridvepixzireqjh.supabase.co/rest/v1/package_assets?daily_package_id=eq.' + $('Code: build publish update').item.json.feedback.daily_package_id + '&asset_type=in.(reel_close,reel_premium,reel_viral,story)' }}",
+          "method": "PATCH",
+          "sendHeaders": true,
+          "headerParameters": {
+            "parameters": [
+              {
+                "name": "apikey",
+                "value": "{{SUPABASE_SERVICE_ROLE_KEY}}"
+              },
+              {
+                "name": "Authorization",
+                "value": "Bearer {{SUPABASE_SERVICE_ROLE_KEY}}"
+              },
+              {
+                "name": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "name": "Prefer",
+                "value": "return=representation"
+              }
+            ]
+          },
+          "sendBody": true,
+          "contentType": "raw",
+          "rawContentType": "application/json",
+          "body": "={{ JSON.stringify({qc_status:'pending',qc_notes:'Revision requested from Telegram: ' + ($('Code: build publish update').item.json.feedback.change_request || $('Code: build publish update').item.json.feedback.raw_message || ''),updated_at:new Date().toISOString()}) }}"
+        },
+        "retryOnFail": true,
+        "maxTries": 3,
+        "waitBetweenTries": 5000
+      },
+      {
+        "id": "donerev-055",
+        "name": "Code: revision queued result",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          2540,
+          300
+        ],
+        "parameters": {
+          "mode": "runOnceForAllItems",
+          "jsCode": "const feedback = $('Code: build publish update').item.json.feedback;\nreturn [{ json: { action: 'revision_queued', daily_package_id: feedback.daily_package_id, message: 'Feedback saved; package marked needs_revision and assets reset for rerender.' } }];"
+        }
+      }
+    ],
+    "connections": {
+      "Webhook: Telegram feedback": {
+        "main": [
+          [
+            {
+              "node": "Supabase: read latest package",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Supabase: read latest package": {
+        "main": [
+          [
+            {
+              "node": "Code: build feedback LLM prompt",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Code: build feedback LLM prompt": {
+        "main": [
+          [
+            {
+              "node": "Polza: GPT-5.2 parse feedback",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Polza: GPT-5.2 parse feedback": {
+        "main": [
+          [
+            {
+              "node": "Code: parse feedback LLM",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Code: parse feedback LLM": {
+        "main": [
+          [
+            {
+              "node": "Supabase: insert feedback",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Supabase: insert feedback": {
+        "main": [
+          [
+            {
+              "node": "Code: build publish update",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Code: build publish update": {
+        "main": [
+          [
+            {
+              "node": "IF: published?",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "IF: published?": {
+        "main": [
+          [
+            {
+              "node": "Supabase: mark package published",
+              "type": "main",
+              "index": 0
+            }
+          ],
+          [
+            {
+              "node": "IF: revision requested?",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Supabase: mark package published": {
+        "main": [
+          [
+            {
+              "node": "Supabase: read published package assets",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Supabase: read published package assets": {
+        "main": [
+          [
+            {
+              "node": "Code: build published posts",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Code: build published posts": {
+        "main": [
+          [
+            {
+              "node": "Supabase: insert published posts",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Supabase: insert published posts": {
+        "main": [
+          [
+            {
+              "node": "Code: published posts result",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "IF: revision requested?": {
+        "main": [
+          [
+            {
+              "node": "Supabase: mark package needs revision",
+              "type": "main",
+              "index": 0
+            }
+          ],
+          [
+            {
+              "node": "Code: feedback saved",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Supabase: mark package needs revision": {
+        "main": [
+          [
+            {
+              "node": "Supabase: reset package assets for revision",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Supabase: reset package assets for revision": {
+        "main": [
+          [
+            {
+              "node": "Code: revision queued result",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      }
+    },
+    "authors": "Никита Савин",
+    "name": null,
+    "description": null,
+    "autosaved": false,
+    "workflowPublishHistory": [
+      {
+        "createdAt": "2026-05-13T18:31:03.363Z",
+        "id": 127,
+        "workflowId": "A08giAKYArdNqDqB",
+        "versionId": "5b8b174d-63fe-427a-9ef5-3f67ebd15b1f",
+        "event": "activated",
+        "userId": "92e19e2b-362b-418d-8b48-7dcd70395297"
+      },
+      {
+        "createdAt": "2026-05-13T18:31:03.335Z",
+        "id": 126,
+        "workflowId": "A08giAKYArdNqDqB",
+        "versionId": "5b8b174d-63fe-427a-9ef5-3f67ebd15b1f",
+        "event": "deactivated",
+        "userId": "92e19e2b-362b-418d-8b48-7dcd70395297"
+      }
+    ]
+  }
 }

@@ -203,7 +203,7 @@
       "typeVersion": 4.4,
       "position": [1504, 464],
       "parameters": {
-        "url": "={{ $json.format && $json.format.includes('reel') ? 'https://api.telegram.org/bot8646017601:AAH4C_nIHvnYqqdBWXVp_BJYxTbQ609nJ4Q/sendVideo' : 'https://api.telegram.org/bot8646017601:AAH4C_nIHvnYqqdBWXVp_BJYxTbQ609nJ4Q/sendPhoto' }}",
+        "url": "={{ $json.format && $json.format.includes('reel') ? 'https://api.telegram.org/bot{{TELEGRAM_BOT_TOKEN}}/sendVideo' : 'https://api.telegram.org/bot{{TELEGRAM_BOT_TOKEN}}/sendPhoto' }}",
         "method": "POST",
         "sendHeaders": true,
         "headerParameters": {
@@ -280,7 +280,7 @@
       "typeVersion": 4.4,
       "position": [2576, 304],
       "parameters": {
-        "url": "https://api.telegram.org/bot8646017601:AAH4C_nIHvnYqqdBWXVp_BJYxTbQ609nJ4Q/sendMessage",
+        "url": "https://api.telegram.org/bot{{TELEGRAM_BOT_TOKEN}}/sendMessage",
         "method": "POST",
         "sendHeaders": true,
         "headerParameters": {

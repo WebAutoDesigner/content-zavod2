@@ -1,7 +1,11 @@
 {
+  "updatedAt": "2026-05-14T10:26:19.613Z",
+  "createdAt": "2026-05-13T17:33:34.867Z",
   "id": "wrEgOmmyFmfNOJVH",
   "name": "04.5 | Render Assets",
+  "description": null,
   "active": true,
+  "isArchived": false,
   "nodes": [
     {
       "id": "sch-045",
@@ -57,11 +61,11 @@
           "parameters": [
             {
               "name": "apikey",
-              "value": "SUPABASE_SECRET_KEY"
+              "value": "{{SUPABASE_SERVICE_ROLE_KEY}}"
             },
             {
               "name": "Authorization",
-              "value": "Bearer SUPABASE_SECRET_KEY"
+              "value": "Bearer {{SUPABASE_SERVICE_ROLE_KEY}}"
             },
             {
               "name": "Content-Type",
@@ -142,11 +146,11 @@
           "parameters": [
             {
               "name": "apikey",
-              "value": "SUPABASE_SECRET_KEY"
+              "value": "{{SUPABASE_SERVICE_ROLE_KEY}}"
             },
             {
               "name": "Authorization",
-              "value": "Bearer SUPABASE_SECRET_KEY"
+              "value": "Bearer {{SUPABASE_SERVICE_ROLE_KEY}}"
             },
             {
               "name": "Content-Type",
@@ -181,11 +185,11 @@
           "parameters": [
             {
               "name": "apikey",
-              "value": "SUPABASE_SECRET_KEY"
+              "value": "{{SUPABASE_SERVICE_ROLE_KEY}}"
             },
             {
               "name": "Authorization",
-              "value": "Bearer SUPABASE_SECRET_KEY"
+              "value": "Bearer {{SUPABASE_SERVICE_ROLE_KEY}}"
             },
             {
               "name": "Content-Type",
@@ -214,7 +218,7 @@
       ],
       "parameters": {
         "mode": "runOnceForAllItems",
-        "jsCode": "const picked = $('Code: pick pending asset').first().json;\nconst asset = picked.asset;\nconst packageRows = $('Supabase: read package').all().flatMap(i => Array.isArray(i.json) ? i.json : [i.json]).filter(r => r && r.id);\nconst queueRows = $input.all().flatMap(i => Array.isArray(i.json) ? i.json : [i.json]).filter(r => r && r.id);\nconst pkg = packageRows[0] || {};\nconst queue = queueRows[0] || {};\nconst variant = queue.content_variants || {};\nconst safeText = v => {\n  if (!v) return '';\n  if (typeof v === 'string') return v;\n  try { return JSON.stringify(v); } catch (e) { return String(v); }\n};\nconst arr = v => Array.isArray(v) ? v : [];\nconst parseJson = v => typeof v === 'string' ? (() => { try { return JSON.parse(v); } catch(e) { return []; } })() : v;\nconst screen = parseJson(variant.screen_text_json);\nconst scenes = parseJson(variant.scene_plan_json);\nconst fallbackHook = 'Смотри, как меняется пространство';\nconst fallbackCta = 'Напиши в директ, чтобы обсудить свой стол';\nconst hook = variant.first_frame || variant.hook_text || asset.caption || fallbackHook;\nconst cta = asset.cta || variant.cta || pkg.cta || fallbackCta;\nconst textLines = [];\nfor (const x of arr(screen)) textLines.push(safeText(x.text || x.screen_text || x.title || x));\nfor (const x of arr(scenes)) textLines.push(safeText(x.text || x.action || x.visual || x));\nif (!textLines.length && asset.caption) textLines.push(asset.caption);\nconst base = {\n  asset_id: asset.id,\n  daily_package_id: asset.daily_package_id,\n  asset_type: asset.asset_type,\n  content_queue_id: asset.content_queue_id,\n  package_date: pkg.package_date,\n  caption: asset.caption || variant.caption || '',\n  cta,\n};\nconst oldAiId = String(asset.qc_notes || '').match(/polza_media_id=([A-Za-z0-9_\\-]+)/)?.[1] || null;\nlet http_method = 'POST';\nlet render_url = 'http://85.239.59.252:8003/render';\nlet render_tool = 'ffmpeg_typewriter';\nlet render_body;\nif (oldAiId && asset.qc_status === 'processing') {\n  http_method = 'GET';\n  render_url = 'https://polza.ai/api/v1/media/' + oldAiId;\n  render_tool = 'polza_ai_video_status';\n  render_body = {};\n} else if (queue.production_mode === 'ai_video' || asset.render_tool === 'polza_sora_2') {\n  render_url = 'https://polza.ai/api/v1/media';\n  render_tool = 'polza_ai_video';\n  const prompt = [\n    variant.ai_video_prompt || '',\n    'Vertical 9:16 premium custom table reel, realistic, high retention first seconds.',\n    'Hook: ' + hook,\n    'Scene plan: ' + textLines.slice(0, 6).join(' | '),\n    'CTA mood: ' + cta,\n    'Avoid third-party logos, recognizable faces, copied competitor branding, unreadable text.'\n  ].filter(Boolean).join('\\n');\n  render_body = {\n    model: 'openai/sora-2',\n    input: {\n      prompt,\n      aspect_ratio: '9:16',\n      duration: 12,\n      quality: 'standard',\n      watermark: false\n    },\n    provider: {\n      allow_fallbacks: true,\n      only: ['OpenAI', 'Google'],\n      order: ['OpenAI', 'Google'],\n      sort: 'quality'\n    },\n    async: true,\n    user: 'content-factory'\n  };\n} else if (asset.asset_type === 'story' || asset.render_tool === 'playwright' || queue.production_mode === 'story_template') {\n  render_url = 'http://85.239.59.252:8004/render_chat';\n  render_tool = 'playwright_chat';\n  const messages = textLines.slice(0, 6).map((text, i) => ({ from: i % 2 === 0 ? 'client' : 'me', text }));\n  if (!messages.length) messages.push({ from: 'client', text: hook }, { from: 'me', text: cta });\n  render_body = { messages, theme: 'dark_premium', duration: 12 };\n} else if (asset.asset_type === 'reel_premium' || queue.queue_group === 'premium') {\n  render_tool = 'ffmpeg_result_card';\n  render_body = {\n    type: 'result_card',\n    business_name: 'Стол на заказ',\n    metrics: textLines.slice(0, 4),\n    tagline: hook,\n    cta,\n    bg_color: '#0d0d0d',\n    duration: 12,\n    resolution: '1080x1920'\n  };\n} else {\n  render_tool = 'ffmpeg_typewriter';\n  render_body = {\n    type: 'typewriter',\n    hook,\n    texts: textLines.slice(0, 6),\n    solution: cta,\n    bg_color: asset.asset_type === 'reel_viral' ? '#111111' : '#0d0d0d',\n    duration: 12,\n    resolution: '1080x1920'\n  };\n}\nreturn [{ json: { ...base, http_method, render_url, render_tool, render_body } }];"
+        "jsCode": "const picked = $('Code: pick pending asset').first().json;\nconst asset = picked.asset;\nconst packageRows = $('Supabase: read package').all().flatMap(i => Array.isArray(i.json) ? i.json : [i.json]).filter(r => r && r.id);\nconst queueRows = $input.all().flatMap(i => Array.isArray(i.json) ? i.json : [i.json]).filter(r => r && r.id);\nconst pkg = packageRows[0] || {};\nconst queue = queueRows[0] || {};\nconst variant = queue.content_variants || {};\nconst cleanText = v => String(v || '')\n  .replace(/[{}[\\]\"`\\\\]/g, ' ')\n  .replace(/[:;]/g, ' -')\n  .replace(/\\s+/g, ' ')\n  .trim()\n  .slice(0, 90);\nconst safeText = v => {\n  if (!v) return '';\n  if (typeof v === 'string') return cleanText(v);\n  if (typeof v === 'object') {\n    const parts = [v.text, v.screen_text, v.title, v.on_screen_text, v.shot, v.action, v.visual, v.purpose].filter(Boolean);\n    if (parts.length) return cleanText(parts.join(' - '));\n  }\n  return cleanText(String(v));\n};\nconst arr = v => Array.isArray(v) ? v : [];\nconst parseJson = v => typeof v === 'string' ? (() => { try { return JSON.parse(v); } catch(e) { return []; } })() : v;\nconst screen = parseJson(variant.screen_text_json);\nconst scenes = parseJson(variant.scene_plan_json);\nconst fallbackHook = 'Смотри, как меняется пространство';\nconst fallbackCta = 'Напиши в директ, чтобы обсудить свой стол';\nconst hook = safeText(variant.first_frame || variant.hook_text || asset.caption || fallbackHook);\nconst cta = safeText(asset.cta || variant.cta || pkg.cta || fallbackCta);\nconst textLines = [];\nfor (const x of arr(screen)) textLines.push(safeText(x.text || x.screen_text || x.title || x));\nfor (const x of arr(scenes)) textLines.push(safeText(x));\nif (!textLines.length && asset.caption) textLines.push(safeText(asset.caption));\nconst uniqueLines = [...new Set(textLines.map(safeText).filter(Boolean))];\ntextLines.length = 0;\ntextLines.push(...uniqueLines);\nconst base = {\n  asset_id: asset.id,\n  daily_package_id: asset.daily_package_id,\n  asset_type: asset.asset_type,\n  content_queue_id: asset.content_queue_id,\n  package_date: pkg.package_date,\n  caption: asset.caption || variant.caption || '',\n  cta,\n};\nconst oldAiId = String(asset.qc_notes || '').match(/polza_media_id=([A-Za-z0-9_\\-]+)/)?.[1] || null;\nlet http_method = 'POST';\nlet render_url = 'http://85.239.59.252:8003/render';\nlet render_tool = 'ffmpeg_typewriter';\nlet render_body;\nif (oldAiId && asset.qc_status === 'processing') {\n  http_method = 'GET';\n  render_url = 'https://polza.ai/api/v1/media/' + oldAiId;\n  render_tool = 'polza_ai_video_status';\n  render_body = {};\n} else if (queue.production_mode === 'ai_video' || asset.render_tool === 'polza_sora_2') {\n  render_url = 'https://polza.ai/api/v1/media';\n  render_tool = 'polza_ai_video';\n  const prompt = [\n    variant.ai_video_prompt || '',\n    'Vertical 9:16 premium custom table reel, realistic, high retention first seconds.',\n    'Hook: ' + hook,\n    'Scene plan: ' + textLines.slice(0, 6).join(' | '),\n    'CTA mood: ' + cta,\n    'Avoid third-party logos, recognizable faces, copied competitor branding, unreadable text.'\n  ].filter(Boolean).join('\\n');\n  render_body = {\n    model: 'openai/sora-2',\n    input: {\n      prompt,\n      aspect_ratio: '9:16',\n      duration: 12,\n      quality: 'standard',\n      watermark: false\n    },\n    provider: {\n      allow_fallbacks: true,\n      only: ['OpenAI', 'Google'],\n      order: ['OpenAI', 'Google'],\n      sort: 'quality'\n    },\n    async: true,\n    user: 'content-factory'\n  };\n} else if (asset.asset_type === 'story' || asset.render_tool === 'playwright' || queue.production_mode === 'story_template') {\n  render_url = 'http://85.239.59.252:8004/render_chat';\n  render_tool = 'playwright_chat';\n  const messages = textLines.slice(0, 6).map((text, i) => ({ from: i % 2 === 0 ? 'client' : 'me', text }));\n  if (!messages.length) messages.push({ from: 'client', text: hook }, { from: 'me', text: cta });\n  render_body = { messages, theme: 'dark_premium', duration: 12 };\n} else if (asset.asset_type === 'reel_premium' || queue.queue_group === 'premium') {\n  render_tool = 'ffmpeg_result_card';\n  render_body = {\n    type: 'result_card',\n    business_name: 'Стол на заказ',\n    metrics: textLines.slice(0, 4),\n    tagline: hook,\n    cta,\n    bg_color: '#0d0d0d',\n    duration: 12,\n    resolution: '1080x1920'\n  };\n} else {\n  render_tool = 'ffmpeg_typewriter';\n  render_body = {\n    type: 'typewriter',\n    hook,\n    texts: textLines.slice(0, 6),\n    solution: cta,\n    bg_color: asset.asset_type === 'reel_viral' ? '#111111' : '#0d0d0d',\n    duration: 12,\n    resolution: '1080x1920'\n  };\n}\nreturn [{ json: { ...base, http_method, render_url, render_tool, render_body } }];"
       }
     },
     {
@@ -238,7 +242,7 @@
             },
             {
               "name": "Authorization",
-              "value": "Bearer POLZA_API_KEY"
+              "value": "Bearer {{POLZA_API_KEY}}"
             }
           ]
         },
@@ -283,11 +287,11 @@
           "parameters": [
             {
               "name": "apikey",
-              "value": "SUPABASE_SECRET_KEY"
+              "value": "{{SUPABASE_SERVICE_ROLE_KEY}}"
             },
             {
               "name": "Authorization",
-              "value": "Bearer SUPABASE_SECRET_KEY"
+              "value": "Bearer {{SUPABASE_SERVICE_ROLE_KEY}}"
             },
             {
               "name": "Content-Type",
@@ -329,11 +333,11 @@
           "parameters": [
             {
               "name": "apikey",
-              "value": "SUPABASE_SECRET_KEY"
+              "value": "{{SUPABASE_SERVICE_ROLE_KEY}}"
             },
             {
               "name": "Authorization",
-              "value": "Bearer SUPABASE_SECRET_KEY"
+              "value": "Bearer {{SUPABASE_SERVICE_ROLE_KEY}}"
             },
             {
               "name": "Content-Type",
@@ -414,11 +418,11 @@
           "parameters": [
             {
               "name": "apikey",
-              "value": "SUPABASE_SECRET_KEY"
+              "value": "{{SUPABASE_SERVICE_ROLE_KEY}}"
             },
             {
               "name": "Authorization",
-              "value": "Bearer SUPABASE_SECRET_KEY"
+              "value": "Bearer {{SUPABASE_SERVICE_ROLE_KEY}}"
             },
             {
               "name": "Content-Type",
@@ -534,7 +538,7 @@
           "parameters": [
             {
               "name": "Authorization",
-              "value": "Bearer POLZA_API_KEY"
+              "value": "Bearer {{POLZA_API_KEY}}"
             },
             {
               "name": "Content-Type",
@@ -768,5 +772,816 @@
     "node:Schedule: render assets": {
       "recurrenceRules": []
     }
+  },
+  "meta": null,
+  "pinData": null,
+  "versionId": "c39c84fd-b609-4a38-98cc-aacff11a7014",
+  "activeVersionId": "c39c84fd-b609-4a38-98cc-aacff11a7014",
+  "versionCounter": 20,
+  "triggerCount": 2,
+  "shared": [
+    {
+      "updatedAt": "2026-05-13T17:33:34.882Z",
+      "createdAt": "2026-05-13T17:33:34.882Z",
+      "role": "workflow:owner",
+      "workflowId": "wrEgOmmyFmfNOJVH",
+      "projectId": "kn5sRpsS0RRIAD6L",
+      "project": {
+        "updatedAt": "2026-03-29T20:49:11.770Z",
+        "createdAt": "2026-03-29T20:41:19.939Z",
+        "id": "kn5sRpsS0RRIAD6L",
+        "name": "Никита Савин <nikitagpt2114@gmail.com>",
+        "type": "personal",
+        "icon": null,
+        "description": null,
+        "creatorId": "92e19e2b-362b-418d-8b48-7dcd70395297"
+      }
+    }
+  ],
+  "tags": [],
+  "activeVersion": {
+    "updatedAt": "2026-05-14T10:26:19.615Z",
+    "createdAt": "2026-05-14T10:26:19.615Z",
+    "versionId": "c39c84fd-b609-4a38-98cc-aacff11a7014",
+    "workflowId": "wrEgOmmyFmfNOJVH",
+    "nodes": [
+      {
+        "id": "sch-045",
+        "name": "Schedule: render assets",
+        "type": "n8n-nodes-base.scheduleTrigger",
+        "typeVersion": 1.2,
+        "position": [
+          0,
+          180
+        ],
+        "parameters": {
+          "rule": {
+            "interval": [
+              {
+                "field": "minutes",
+                "minutesInterval": 10
+              }
+            ]
+          }
+        }
+      },
+      {
+        "id": "wh-045",
+        "name": "Webhook: manual WF04.5",
+        "type": "n8n-nodes-base.webhook",
+        "typeVersion": 2,
+        "position": [
+          0,
+          380
+        ],
+        "parameters": {
+          "path": "wf045-render-assets",
+          "httpMethod": "POST",
+          "responseMode": "lastNode"
+        },
+        "webhookId": "wf045-render-assets",
+        "onError": "continueRegularOutput"
+      },
+      {
+        "id": "readasset-045",
+        "name": "Supabase: read pending asset",
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.4,
+        "position": [
+          300,
+          280
+        ],
+        "parameters": {
+          "url": "https://xxnzqridvepixzireqjh.supabase.co/rest/v1/package_assets?select=*&qc_status=in.(pending,processing)&asset_type=in.(reel_close,reel_premium,reel_viral,story)&order=created_at.asc&limit=1",
+          "method": "GET",
+          "sendHeaders": true,
+          "headerParameters": {
+            "parameters": [
+              {
+                "name": "apikey",
+                "value": "{{SUPABASE_SERVICE_ROLE_KEY}}"
+              },
+              {
+                "name": "Authorization",
+                "value": "Bearer {{SUPABASE_SERVICE_ROLE_KEY}}"
+              },
+              {
+                "name": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "name": "Prefer",
+                "value": "return=representation"
+              }
+            ]
+          }
+        },
+        "alwaysOutputData": true,
+        "retryOnFail": true,
+        "maxTries": 3,
+        "waitBetweenTries": 5000
+      },
+      {
+        "id": "pickasset-045",
+        "name": "Code: pick pending asset",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          580,
+          280
+        ],
+        "parameters": {
+          "mode": "runOnceForAllItems",
+          "jsCode": "const rows = $input.all().flatMap(i => Array.isArray(i.json) ? i.json : [i.json]).filter(r => r && r.id);\nif (!rows.length) {\n  return [{ json: { has_asset: false, action: 'skip', message: 'No pending package assets for WF04.5.' } }];\n}\nconst asset = rows[0];\nreturn [{ json: { has_asset: true, asset } }];"
+        }
+      },
+      {
+        "id": "ifasset-045",
+        "name": "IF: has asset?",
+        "type": "n8n-nodes-base.if",
+        "typeVersion": 2.3,
+        "position": [
+          860,
+          280
+        ],
+        "parameters": {
+          "conditions": {
+            "combinator": "and",
+            "options": {
+              "caseSensitive": true,
+              "leftValue": "",
+              "typeValidation": "strict",
+              "version": 2
+            },
+            "conditions": [
+              {
+                "id": "has_asset",
+                "leftValue": "={{ $json.has_asset }}",
+                "operator": {
+                  "type": "boolean",
+                  "operation": "true",
+                  "singleValue": true
+                }
+              }
+            ]
+          }
+        }
+      },
+      {
+        "id": "readpkg-045",
+        "name": "Supabase: read package",
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.4,
+        "position": [
+          1140,
+          120
+        ],
+        "parameters": {
+          "url": "={{ 'https://xxnzqridvepixzireqjh.supabase.co/rest/v1/daily_packages?select=*&id=eq.' + $json.asset.daily_package_id }}",
+          "method": "GET",
+          "sendHeaders": true,
+          "headerParameters": {
+            "parameters": [
+              {
+                "name": "apikey",
+                "value": "{{SUPABASE_SERVICE_ROLE_KEY}}"
+              },
+              {
+                "name": "Authorization",
+                "value": "Bearer {{SUPABASE_SERVICE_ROLE_KEY}}"
+              },
+              {
+                "name": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "name": "Prefer",
+                "value": "return=representation"
+              }
+            ]
+          }
+        },
+        "alwaysOutputData": true,
+        "retryOnFail": true,
+        "maxTries": 3,
+        "waitBetweenTries": 5000
+      },
+      {
+        "id": "readqueue-045",
+        "name": "Supabase: read queue variant",
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.4,
+        "position": [
+          1420,
+          120
+        ],
+        "parameters": {
+          "url": "={{ 'https://xxnzqridvepixzireqjh.supabase.co/rest/v1/content_queue?select=*,content_variants(*)&id=eq.' + $('Code: pick pending asset').item.json.asset.content_queue_id }}",
+          "method": "GET",
+          "sendHeaders": true,
+          "headerParameters": {
+            "parameters": [
+              {
+                "name": "apikey",
+                "value": "{{SUPABASE_SERVICE_ROLE_KEY}}"
+              },
+              {
+                "name": "Authorization",
+                "value": "Bearer {{SUPABASE_SERVICE_ROLE_KEY}}"
+              },
+              {
+                "name": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "name": "Prefer",
+                "value": "return=representation"
+              }
+            ]
+          }
+        },
+        "alwaysOutputData": true,
+        "retryOnFail": true,
+        "maxTries": 3,
+        "waitBetweenTries": 5000
+      },
+      {
+        "id": "buildrender-045",
+        "name": "Code: build render request",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          1700,
+          120
+        ],
+        "parameters": {
+          "mode": "runOnceForAllItems",
+          "jsCode": "const picked = $('Code: pick pending asset').first().json;\nconst asset = picked.asset;\nconst packageRows = $('Supabase: read package').all().flatMap(i => Array.isArray(i.json) ? i.json : [i.json]).filter(r => r && r.id);\nconst queueRows = $input.all().flatMap(i => Array.isArray(i.json) ? i.json : [i.json]).filter(r => r && r.id);\nconst pkg = packageRows[0] || {};\nconst queue = queueRows[0] || {};\nconst variant = queue.content_variants || {};\nconst cleanText = v => String(v || '')\n  .replace(/[{}[\\]\"`\\\\]/g, ' ')\n  .replace(/[:;]/g, ' -')\n  .replace(/\\s+/g, ' ')\n  .trim()\n  .slice(0, 90);\nconst safeText = v => {\n  if (!v) return '';\n  if (typeof v === 'string') return cleanText(v);\n  if (typeof v === 'object') {\n    const parts = [v.text, v.screen_text, v.title, v.on_screen_text, v.shot, v.action, v.visual, v.purpose].filter(Boolean);\n    if (parts.length) return cleanText(parts.join(' - '));\n  }\n  return cleanText(String(v));\n};\nconst arr = v => Array.isArray(v) ? v : [];\nconst parseJson = v => typeof v === 'string' ? (() => { try { return JSON.parse(v); } catch(e) { return []; } })() : v;\nconst screen = parseJson(variant.screen_text_json);\nconst scenes = parseJson(variant.scene_plan_json);\nconst fallbackHook = 'Смотри, как меняется пространство';\nconst fallbackCta = 'Напиши в директ, чтобы обсудить свой стол';\nconst hook = safeText(variant.first_frame || variant.hook_text || asset.caption || fallbackHook);\nconst cta = safeText(asset.cta || variant.cta || pkg.cta || fallbackCta);\nconst textLines = [];\nfor (const x of arr(screen)) textLines.push(safeText(x.text || x.screen_text || x.title || x));\nfor (const x of arr(scenes)) textLines.push(safeText(x));\nif (!textLines.length && asset.caption) textLines.push(safeText(asset.caption));\nconst uniqueLines = [...new Set(textLines.map(safeText).filter(Boolean))];\ntextLines.length = 0;\ntextLines.push(...uniqueLines);\nconst base = {\n  asset_id: asset.id,\n  daily_package_id: asset.daily_package_id,\n  asset_type: asset.asset_type,\n  content_queue_id: asset.content_queue_id,\n  package_date: pkg.package_date,\n  caption: asset.caption || variant.caption || '',\n  cta,\n};\nconst oldAiId = String(asset.qc_notes || '').match(/polza_media_id=([A-Za-z0-9_\\-]+)/)?.[1] || null;\nlet http_method = 'POST';\nlet render_url = 'http://85.239.59.252:8003/render';\nlet render_tool = 'ffmpeg_typewriter';\nlet render_body;\nif (oldAiId && asset.qc_status === 'processing') {\n  http_method = 'GET';\n  render_url = 'https://polza.ai/api/v1/media/' + oldAiId;\n  render_tool = 'polza_ai_video_status';\n  render_body = {};\n} else if (queue.production_mode === 'ai_video' || asset.render_tool === 'polza_sora_2') {\n  render_url = 'https://polza.ai/api/v1/media';\n  render_tool = 'polza_ai_video';\n  const prompt = [\n    variant.ai_video_prompt || '',\n    'Vertical 9:16 premium custom table reel, realistic, high retention first seconds.',\n    'Hook: ' + hook,\n    'Scene plan: ' + textLines.slice(0, 6).join(' | '),\n    'CTA mood: ' + cta,\n    'Avoid third-party logos, recognizable faces, copied competitor branding, unreadable text.'\n  ].filter(Boolean).join('\\n');\n  render_body = {\n    model: 'openai/sora-2',\n    input: {\n      prompt,\n      aspect_ratio: '9:16',\n      duration: 12,\n      quality: 'standard',\n      watermark: false\n    },\n    provider: {\n      allow_fallbacks: true,\n      only: ['OpenAI', 'Google'],\n      order: ['OpenAI', 'Google'],\n      sort: 'quality'\n    },\n    async: true,\n    user: 'content-factory'\n  };\n} else if (asset.asset_type === 'story' || asset.render_tool === 'playwright' || queue.production_mode === 'story_template') {\n  render_url = 'http://85.239.59.252:8004/render_chat';\n  render_tool = 'playwright_chat';\n  const messages = textLines.slice(0, 6).map((text, i) => ({ from: i % 2 === 0 ? 'client' : 'me', text }));\n  if (!messages.length) messages.push({ from: 'client', text: hook }, { from: 'me', text: cta });\n  render_body = { messages, theme: 'dark_premium', duration: 12 };\n} else if (asset.asset_type === 'reel_premium' || queue.queue_group === 'premium') {\n  render_tool = 'ffmpeg_result_card';\n  render_body = {\n    type: 'result_card',\n    business_name: 'Стол на заказ',\n    metrics: textLines.slice(0, 4),\n    tagline: hook,\n    cta,\n    bg_color: '#0d0d0d',\n    duration: 12,\n    resolution: '1080x1920'\n  };\n} else {\n  render_tool = 'ffmpeg_typewriter';\n  render_body = {\n    type: 'typewriter',\n    hook,\n    texts: textLines.slice(0, 6),\n    solution: cta,\n    bg_color: asset.asset_type === 'reel_viral' ? '#111111' : '#0d0d0d',\n    duration: 12,\n    resolution: '1080x1920'\n  };\n}\nreturn [{ json: { ...base, http_method, render_url, render_tool, render_body } }];"
+        }
+      },
+      {
+        "id": "render-045",
+        "name": "HTTP: render video",
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.4,
+        "position": [
+          1980,
+          120
+        ],
+        "parameters": {
+          "url": "={{ $json.render_url }}",
+          "method": "POST",
+          "sendHeaders": true,
+          "headerParameters": {
+            "parameters": [
+              {
+                "name": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "name": "Authorization",
+                "value": "Bearer {{POLZA_API_KEY}}"
+              }
+            ]
+          },
+          "sendBody": true,
+          "contentType": "raw",
+          "rawContentType": "application/json",
+          "body": "={{ JSON.stringify($json.render_body) }}"
+        },
+        "onError": "continueRegularOutput",
+        "retryOnFail": true,
+        "maxTries": 2,
+        "waitBetweenTries": 10000
+      },
+      {
+        "id": "buildupdate-045",
+        "name": "Code: build asset update",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          2260,
+          120
+        ],
+        "parameters": {
+          "mode": "runOnceForAllItems",
+          "jsCode": "const req = $('Code: build render request').first().json;\nconst response = $input.first()?.json || {};\nconst now = new Date().toISOString();\nfunction firstUrl(data) {\n  if (!data) return null;\n  if (typeof data === 'string' && /^https?:\\/\\//.test(data)) return data;\n  if (Array.isArray(data)) return firstUrl(data[0]);\n  if (typeof data === 'object') return data.url || data.file_url || data.video_url || data.download_url || data.output_url || data.data?.url || null;\n  return null;\n}\nlet ok = false;\nlet body;\nif (req.render_tool.startsWith('polza_ai_video')) {\n  const mediaId = response.id || response.generation_id || response.task_id || null;\n  const status = String(response.status || '').toLowerCase();\n  const url = firstUrl(response.data) || firstUrl(response.output) || firstUrl(response.result) || firstUrl(response.content);\n  if ((status === 'completed' || status === 'succeeded' || status === 'success') && url) {\n    ok = true;\n    body = {\n      file_path: url,\n      storage_url: url,\n      qc_status: 'passed',\n      qc_notes: 'AI video rendered by Polza via ' + (response.model || 'openai/sora-2'),\n      duration_seconds: req.render_body?.input?.duration || 12,\n      resolution: '1080x1920',\n      updated_at: now\n    };\n  } else if (mediaId || status === 'pending' || status === 'processing') {\n    body = {\n      qc_status: 'processing',\n      qc_notes: 'Polza AI video is processing; polza_media_id=' + (mediaId || 'unknown') + '; status=' + (status || 'pending'),\n      updated_at: now\n    };\n  } else {\n    body = {\n      qc_status: 'failed',\n      qc_notes: 'Polza AI video failed: ' + (response.error?.message || response.message || JSON.stringify(response).slice(0, 500)),\n      updated_at: now\n    };\n  }\n} else {\n  ok = response.success === true && !!response.file_path;\n  body = ok ? {\n    file_path: response.file_path,\n    storage_url: response.file_url || null,\n    qc_status: 'passed',\n    qc_notes: 'Rendered by WF04.5 via ' + req.render_tool,\n    duration_seconds: req.render_body?.duration || 12,\n    resolution: '1080x1920',\n    updated_at: now\n  } : {\n    qc_status: 'failed',\n    qc_notes: 'Render failed in WF04.5: ' + (response.message || response.error || JSON.stringify(response).slice(0, 500)),\n    updated_at: now\n  };\n}\nreturn [{ json: { asset_id: req.asset_id, daily_package_id: req.daily_package_id, ok, update_body: body, render_response: response } }];"
+        }
+      },
+      {
+        "id": "patchasset-045",
+        "name": "Supabase: update package asset",
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.4,
+        "position": [
+          2540,
+          120
+        ],
+        "parameters": {
+          "url": "={{ 'https://xxnzqridvepixzireqjh.supabase.co/rest/v1/package_assets?id=eq.' + $json.asset_id }}",
+          "method": "PATCH",
+          "sendHeaders": true,
+          "headerParameters": {
+            "parameters": [
+              {
+                "name": "apikey",
+                "value": "{{SUPABASE_SERVICE_ROLE_KEY}}"
+              },
+              {
+                "name": "Authorization",
+                "value": "Bearer {{SUPABASE_SERVICE_ROLE_KEY}}"
+              },
+              {
+                "name": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "name": "Prefer",
+                "value": "return=representation"
+              },
+              {
+                "name": "Prefer",
+                "value": "return=representation"
+              }
+            ]
+          },
+          "sendBody": true,
+          "contentType": "raw",
+          "rawContentType": "application/json",
+          "body": "={{ JSON.stringify($json.update_body) }}"
+        },
+        "retryOnFail": true,
+        "maxTries": 3,
+        "waitBetweenTries": 5000
+      },
+      {
+        "id": "readblockers-045",
+        "name": "Supabase: read package blockers",
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.4,
+        "position": [
+          2820,
+          120
+        ],
+        "parameters": {
+          "url": "={{ 'https://xxnzqridvepixzireqjh.supabase.co/rest/v1/package_assets?select=id,qc_status,asset_type&daily_package_id=eq.' + $('Code: build asset update').item.json.daily_package_id + '&asset_type=in.(reel_close,reel_premium,reel_viral,story)&qc_status=in.(pending,processing,failed)&limit=1' }}",
+          "method": "GET",
+          "sendHeaders": true,
+          "headerParameters": {
+            "parameters": [
+              {
+                "name": "apikey",
+                "value": "{{SUPABASE_SERVICE_ROLE_KEY}}"
+              },
+              {
+                "name": "Authorization",
+                "value": "Bearer {{SUPABASE_SERVICE_ROLE_KEY}}"
+              },
+              {
+                "name": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "name": "Prefer",
+                "value": "return=representation"
+              }
+            ]
+          }
+        },
+        "alwaysOutputData": true,
+        "retryOnFail": true,
+        "maxTries": 3,
+        "waitBetweenTries": 5000
+      },
+      {
+        "id": "decide-045",
+        "name": "Code: decide package ready",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          3100,
+          120
+        ],
+        "parameters": {
+          "mode": "runOnceForAllItems",
+          "jsCode": "const rows = $input.all().flatMap(i => Array.isArray(i.json) ? i.json : [i.json]).filter(r => r && r.id);\nconst render = $('Code: build asset update').first().json;\nconst package_ready = rows.length === 0;\nreturn [{ json: { package_ready, daily_package_id: render.daily_package_id, rendered_asset_id: render.asset_id, blocking_assets: rows.map(r => ({ id: r.id, asset_type: r.asset_type, qc_status: r.qc_status })) } }];"
+        }
+      },
+      {
+        "id": "ifready-045",
+        "name": "IF: package ready?",
+        "type": "n8n-nodes-base.if",
+        "typeVersion": 2.3,
+        "position": [
+          3380,
+          120
+        ],
+        "parameters": {
+          "conditions": {
+            "combinator": "and",
+            "options": {
+              "caseSensitive": true,
+              "leftValue": "",
+              "typeValidation": "strict",
+              "version": 2
+            },
+            "conditions": [
+              {
+                "id": "package_ready",
+                "leftValue": "={{ $json.package_ready }}",
+                "operator": {
+                  "type": "boolean",
+                  "operation": "true",
+                  "singleValue": true
+                }
+              }
+            ]
+          }
+        }
+      },
+      {
+        "id": "patchpkg-045",
+        "name": "Supabase: mark package ready",
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.4,
+        "position": [
+          3660,
+          20
+        ],
+        "parameters": {
+          "url": "={{ 'https://xxnzqridvepixzireqjh.supabase.co/rest/v1/daily_packages?id=eq.' + $json.daily_package_id }}",
+          "method": "PATCH",
+          "sendHeaders": true,
+          "headerParameters": {
+            "parameters": [
+              {
+                "name": "apikey",
+                "value": "{{SUPABASE_SERVICE_ROLE_KEY}}"
+              },
+              {
+                "name": "Authorization",
+                "value": "Bearer {{SUPABASE_SERVICE_ROLE_KEY}}"
+              },
+              {
+                "name": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "name": "Prefer",
+                "value": "return=representation"
+              },
+              {
+                "name": "Prefer",
+                "value": "return=representation"
+              }
+            ]
+          },
+          "sendBody": true,
+          "contentType": "raw",
+          "rawContentType": "application/json",
+          "body": "={{ JSON.stringify({status:'ready',folder_path:'/root/renders',updated_at:new Date().toISOString()}) }}"
+        },
+        "retryOnFail": true,
+        "maxTries": 3,
+        "waitBetweenTries": 5000
+      },
+      {
+        "id": "readyresult-045",
+        "name": "Code: ready result",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          3940,
+          20
+        ],
+        "parameters": {
+          "mode": "runOnceForAllItems",
+          "jsCode": "const d = $('Code: decide package ready').first().json;\nreturn [{ json: { action: 'package_ready', daily_package_id: d.daily_package_id, rendered_asset_id: d.rendered_asset_id, message: 'All package assets rendered; package is ready for WF05 delivery.' } }];"
+        }
+      },
+      {
+        "id": "waiting-045",
+        "name": "Code: waiting result",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          3660,
+          220
+        ],
+        "parameters": {
+          "mode": "runOnceForAllItems",
+          "jsCode": "const d = $('Code: decide package ready').first().json;\nreturn [{ json: { action: 'asset_rendered_waiting', daily_package_id: d.daily_package_id, rendered_asset_id: d.rendered_asset_id, blocking_assets: d.blocking_assets, message: 'Asset rendered; package still has pending or failed assets.' } }];"
+        }
+      },
+      {
+        "id": "skip-045",
+        "name": "Code: no pending assets",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          1140,
+          440
+        ],
+        "parameters": {
+          "mode": "runOnceForAllItems",
+          "jsCode": "return [{ json: { action: 'skip', message: 'No pending package assets for WF04.5.' } }];"
+        }
+      },
+      {
+        "id": "ifpoll-045",
+        "name": "IF: poll Polza AI video?",
+        "type": "n8n-nodes-base.if",
+        "typeVersion": 2.3,
+        "position": [
+          1880,
+          300
+        ],
+        "parameters": {
+          "conditions": {
+            "combinator": "and",
+            "options": {
+              "version": 2,
+              "leftValue": "",
+              "caseSensitive": true,
+              "typeValidation": "strict"
+            },
+            "conditions": [
+              {
+                "id": "poll-polza",
+                "leftValue": "={{ $json.render_tool === 'polza_ai_video_status' }}",
+                "operator": {
+                  "type": "boolean",
+                  "operation": "true",
+                  "singleValue": true
+                }
+              }
+            ]
+          }
+        }
+      },
+      {
+        "id": "pollpolza-045",
+        "name": "Polza: get AI video status",
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.4,
+        "position": [
+          2140,
+          300
+        ],
+        "parameters": {
+          "url": "={{ $json.render_url }}",
+          "method": "GET",
+          "sendHeaders": true,
+          "headerParameters": {
+            "parameters": [
+              {
+                "name": "Authorization",
+                "value": "Bearer {{POLZA_API_KEY}}"
+              },
+              {
+                "name": "Content-Type",
+                "value": "application/json"
+              }
+            ]
+          }
+        },
+        "onError": "continueRegularOutput",
+        "retryOnFail": true,
+        "maxTries": 2,
+        "waitBetweenTries": 10000
+      }
+    ],
+    "connections": {
+      "Schedule: render assets": {
+        "main": [
+          [
+            {
+              "node": "Supabase: read pending asset",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Webhook: manual WF04.5": {
+        "main": [
+          [
+            {
+              "node": "Supabase: read pending asset",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Supabase: read pending asset": {
+        "main": [
+          [
+            {
+              "node": "Code: pick pending asset",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Code: pick pending asset": {
+        "main": [
+          [
+            {
+              "node": "IF: has asset?",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "IF: has asset?": {
+        "main": [
+          [
+            {
+              "node": "Supabase: read package",
+              "type": "main",
+              "index": 0
+            }
+          ],
+          [
+            {
+              "node": "Code: no pending assets",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Supabase: read package": {
+        "main": [
+          [
+            {
+              "node": "Supabase: read queue variant",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Supabase: read queue variant": {
+        "main": [
+          [
+            {
+              "node": "Code: build render request",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "HTTP: render video": {
+        "main": [
+          [
+            {
+              "node": "Code: build asset update",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Code: build asset update": {
+        "main": [
+          [
+            {
+              "node": "Supabase: update package asset",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Supabase: update package asset": {
+        "main": [
+          [
+            {
+              "node": "Supabase: read package blockers",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Supabase: read package blockers": {
+        "main": [
+          [
+            {
+              "node": "Code: decide package ready",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Code: decide package ready": {
+        "main": [
+          [
+            {
+              "node": "IF: package ready?",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "IF: package ready?": {
+        "main": [
+          [
+            {
+              "node": "Supabase: mark package ready",
+              "type": "main",
+              "index": 0
+            }
+          ],
+          [
+            {
+              "node": "Code: waiting result",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Supabase: mark package ready": {
+        "main": [
+          [
+            {
+              "node": "Code: ready result",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Code: build render request": {
+        "main": [
+          [
+            {
+              "node": "IF: poll Polza AI video?",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "IF: poll Polza AI video?": {
+        "main": [
+          [
+            {
+              "node": "Polza: get AI video status",
+              "type": "main",
+              "index": 0
+            }
+          ],
+          [
+            {
+              "node": "HTTP: render video",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Polza: get AI video status": {
+        "main": [
+          [
+            {
+              "node": "Code: build asset update",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      }
+    },
+    "authors": "Никита Савин",
+    "name": null,
+    "description": null,
+    "autosaved": false,
+    "workflowPublishHistory": [
+      {
+        "createdAt": "2026-05-14T10:26:19.757Z",
+        "id": 159,
+        "workflowId": "wrEgOmmyFmfNOJVH",
+        "versionId": "c39c84fd-b609-4a38-98cc-aacff11a7014",
+        "event": "activated",
+        "userId": "92e19e2b-362b-418d-8b48-7dcd70395297"
+      },
+      {
+        "createdAt": "2026-05-14T10:26:19.694Z",
+        "id": 158,
+        "workflowId": "wrEgOmmyFmfNOJVH",
+        "versionId": "c39c84fd-b609-4a38-98cc-aacff11a7014",
+        "event": "deactivated",
+        "userId": "92e19e2b-362b-418d-8b48-7dcd70395297"
+      }
+    ]
   }
 }

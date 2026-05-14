@@ -1,7 +1,11 @@
 {
+  "updatedAt": "2026-05-13T18:34:33.544Z",
+  "createdAt": "2026-05-13T14:18:48.481Z",
   "id": "9LYOOFiIxZBWjlME",
   "name": "06 | Performance Learning",
+  "description": null,
   "active": true,
+  "isArchived": false,
   "nodes": [
     {
       "id": "sch-06",
@@ -57,11 +61,11 @@
           "parameters": [
             {
               "name": "apikey",
-              "value": "SUPABASE_SECRET_KEY"
+              "value": "{{SUPABASE_SERVICE_ROLE_KEY}}"
             },
             {
               "name": "Authorization",
-              "value": "Bearer SUPABASE_SECRET_KEY"
+              "value": "Bearer {{SUPABASE_SERVICE_ROLE_KEY}}"
             },
             {
               "name": "Content-Type",
@@ -139,7 +143,7 @@
           "parameters": [
             {
               "name": "Authorization",
-              "value": "Bearer POLZA_API_KEY"
+              "value": "Bearer {{POLZA_API_KEY}}"
             },
             {
               "name": "Content-Type",
@@ -187,11 +191,11 @@
           "parameters": [
             {
               "name": "apikey",
-              "value": "SUPABASE_SECRET_KEY"
+              "value": "{{SUPABASE_SERVICE_ROLE_KEY}}"
             },
             {
               "name": "Authorization",
-              "value": "Bearer SUPABASE_SECRET_KEY"
+              "value": "Bearer {{SUPABASE_SERVICE_ROLE_KEY}}"
             },
             {
               "name": "Content-Type",
@@ -347,5 +351,395 @@
     "node:Schedule: learn from performance": {
       "recurrenceRules": []
     }
+  },
+  "meta": null,
+  "pinData": null,
+  "versionId": "217a81af-f315-412e-8584-99d6d61ac8c8",
+  "activeVersionId": "217a81af-f315-412e-8584-99d6d61ac8c8",
+  "versionCounter": 22,
+  "triggerCount": 2,
+  "shared": [
+    {
+      "updatedAt": "2026-05-13T14:18:48.484Z",
+      "createdAt": "2026-05-13T14:18:48.484Z",
+      "role": "workflow:owner",
+      "workflowId": "9LYOOFiIxZBWjlME",
+      "projectId": "kn5sRpsS0RRIAD6L",
+      "project": {
+        "updatedAt": "2026-03-29T20:49:11.770Z",
+        "createdAt": "2026-03-29T20:41:19.939Z",
+        "id": "kn5sRpsS0RRIAD6L",
+        "name": "Никита Савин <nikitagpt2114@gmail.com>",
+        "type": "personal",
+        "icon": null,
+        "description": null,
+        "creatorId": "92e19e2b-362b-418d-8b48-7dcd70395297"
+      }
+    }
+  ],
+  "tags": [],
+  "activeVersion": {
+    "updatedAt": "2026-05-13T18:34:33.545Z",
+    "createdAt": "2026-05-13T18:34:33.545Z",
+    "versionId": "217a81af-f315-412e-8584-99d6d61ac8c8",
+    "workflowId": "9LYOOFiIxZBWjlME",
+    "nodes": [
+      {
+        "id": "sch-06",
+        "name": "Schedule: learn from performance",
+        "type": "n8n-nodes-base.scheduleTrigger",
+        "typeVersion": 1.2,
+        "position": [
+          0,
+          180
+        ],
+        "parameters": {
+          "rule": {
+            "interval": [
+              {
+                "field": "cronExpression",
+                "expression": "0 10 */3 * *"
+              }
+            ]
+          }
+        }
+      },
+      {
+        "id": "wh-06",
+        "name": "Webhook: manual WF06",
+        "type": "n8n-nodes-base.webhook",
+        "typeVersion": 2,
+        "position": [
+          0,
+          380
+        ],
+        "parameters": {
+          "path": "wf06-performance-learning",
+          "httpMethod": "POST",
+          "responseMode": "lastNode"
+        },
+        "webhookId": "22f49cf9-ebfc-4be8-9684-3afaa4890769",
+        "onError": "continueRegularOutput"
+      },
+      {
+        "id": "readposts-06",
+        "name": "Supabase: read posts with metrics",
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.4,
+        "position": [
+          300,
+          280
+        ],
+        "parameters": {
+          "url": "https://xxnzqridvepixzireqjh.supabase.co/rest/v1/published_posts?select=*,pattern_performance!left(id),package_assets(content_queue_id,content_queue(content_variant_id,production_mode,content_variants(content_pattern_id,pattern_recipe_id,variant_group)))&views=not.is.null&pattern_performance.id=is.null&order=created_at.asc&limit=100",
+          "method": "GET",
+          "sendHeaders": true,
+          "headerParameters": {
+            "parameters": [
+              {
+                "name": "apikey",
+                "value": "{{SUPABASE_SERVICE_ROLE_KEY}}"
+              },
+              {
+                "name": "Authorization",
+                "value": "Bearer {{SUPABASE_SERVICE_ROLE_KEY}}"
+              },
+              {
+                "name": "Content-Type",
+                "value": "application/json"
+              }
+            ]
+          }
+        },
+        "alwaysOutputData": true,
+        "retryOnFail": true,
+        "maxTries": 3,
+        "waitBetweenTries": 5000
+      },
+      {
+        "id": "learn-06",
+        "name": "Code: build learning rows",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          580,
+          280
+        ],
+        "parameters": {
+          "mode": "runOnceForAllItems",
+          "jsCode": "const posts = $input.all().flatMap(i => Array.isArray(i.json) ? i.json : [i.json]).filter(p => p && p.id);\nif (!posts.length) return [{ json: { ok: false, action: 'skip', message: 'No published posts with metrics.' } }];\nconst rows = [];\nfor (const p of posts) {\n  const avg = Number(p.account_average_views_at_check || 0);\n  const mult = avg > 0 ? Number(p.views || 0) / avg : Number(p.views_multiplier || 0);\n  const level = mult >= 20 ? 'extreme_x20' : mult >= 5 ? 'successful_x5' : mult >= 1 ? 'normal' : 'weak';\n  const cv = p.package_assets?.content_queue?.content_variants;\n  rows.push({\n    content_pattern_id: cv?.content_pattern_id || null,\n    pattern_recipe_id: cv?.pattern_recipe_id || null,\n    published_post_id: p.id,\n    variant_group: cv?.variant_group || null,\n    production_mode: p.package_assets?.content_queue?.production_mode || null,\n    views_multiplier: mult,\n    engagement_score: (Number(p.likes || 0) + Number(p.comments || 0) * 3 + Number(p.saves || 0) * 5 + Number(p.shares || 0) * 6) / Math.max(Number(p.views || 1), 1),\n    lead_score: Number(p.leads || 0),\n    learning_result: level === 'extreme_x20' || level === 'successful_x5' ? 'increase_weight' : (level === 'weak' ? 'decrease_weight' : 'keep'),\n    weight_delta: level === 'extreme_x20' ? 0.35 : (level === 'successful_x5' ? 0.2 : (level === 'weak' ? -0.15 : 0)),\n    notes: 'Auto numeric learning: success=' + level,\n    created_at: new Date().toISOString(),\n    updated_at: new Date().toISOString()\n  });\n}\nconst system = [\n  'You are the strategy brain of a viral content factory for premium custom tables.',\n  'Analyze published post metrics and convert them into precise learning notes for future pattern selection.',\n  'Use x5 as successful and x20 as extreme viral. If user dislikes a video but it performs, preserve the viral mechanism and lower only brand/premium cautions.',\n  'Return only valid JSON in Russian.'\n].join(' ');\nconst user = [\n  'For each learning row, write short but useful notes: what to increase/decrease, which hook/visual/scenario/audio/CTA mechanics to reuse or avoid.',\n  'Also return global_recommendations for next WF02/WF03/WF03.5 decisions.',\n  'Return JSON: {\"row_notes\":[{\"published_post_id\":\"\",\"notes\":\"\"}],\"global_recommendations\":[]}',\n  'POSTS:',\n  JSON.stringify(posts),\n  'NUMERIC_ROWS:',\n  JSON.stringify(rows)\n].join('\\n');\nreturn [{ json: { ok: true, rows, polza_body: { model: 'openai/gpt-5.2', temperature: 0.2, response_format: { type: 'json_object' }, messages: [{ role: 'system', content: system }, { role: 'user', content: user }] } } }];"
+        }
+      },
+      {
+        "id": "if-06",
+        "name": "IF: has learning?",
+        "type": "n8n-nodes-base.if",
+        "typeVersion": 2.3,
+        "position": [
+          860,
+          280
+        ],
+        "parameters": {
+          "conditions": {
+            "combinator": "and",
+            "options": {
+              "version": 2,
+              "leftValue": "",
+              "caseSensitive": true,
+              "typeValidation": "strict"
+            },
+            "conditions": [
+              {
+                "id": "ok",
+                "leftValue": "={{ $json.ok }}",
+                "operator": {
+                  "type": "boolean",
+                  "operation": "true",
+                  "singleValue": true
+                }
+              }
+            ]
+          }
+        },
+        "onError": "continueErrorOutput"
+      },
+      {
+        "id": "polza-06",
+        "name": "Polza: GPT-5.2 learning strategist",
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.4,
+        "position": [
+          1140,
+          140
+        ],
+        "parameters": {
+          "url": "https://polza.ai/api/v1/chat/completions",
+          "method": "POST",
+          "sendHeaders": true,
+          "headerParameters": {
+            "parameters": [
+              {
+                "name": "Authorization",
+                "value": "Bearer {{POLZA_API_KEY}}"
+              },
+              {
+                "name": "Content-Type",
+                "value": "application/json"
+              }
+            ]
+          },
+          "sendBody": true,
+          "contentType": "raw",
+          "rawContentType": "application/json",
+          "body": "={{ JSON.stringify($json.polza_body) }}"
+        },
+        "retryOnFail": true,
+        "maxTries": 2,
+        "waitBetweenTries": 10000
+      },
+      {
+        "id": "merge-06",
+        "name": "Code: merge learning notes",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          1420,
+          140
+        ],
+        "parameters": {
+          "mode": "runOnceForAllItems",
+          "jsCode": "const source = $('Code: build learning rows').first().json;\nconst response = $input.first()?.json || {};\nconst raw = response.choices?.[0]?.message?.content || response.message?.content || response.content || '';\nfunction parseJson(text) {\n  const clean = String(text || '').trim().replace(/^\\`\\`\\`json\\s*/i, '').replace(/^\\`\\`\\`\\s*/i, '').replace(/\\`\\`\\`$/i, '').trim();\n  try { return JSON.parse(clean); } catch (e) {}\n  const start = clean.indexOf('{'); const end = clean.lastIndexOf('}');\n  if (start >= 0 && end > start) return JSON.parse(clean.slice(start, end + 1));\n  return {};\n}\nconst parsed = parseJson(raw);\nconst notesByPost = new Map((Array.isArray(parsed.row_notes) ? parsed.row_notes : []).map(x => [String(x.published_post_id), String(x.notes || '')]));\nconst global = Array.isArray(parsed.global_recommendations) ? parsed.global_recommendations : [];\nconst rows = (source.rows || []).map(r => ({\n  ...r,\n  notes: [r.notes, notesByPost.get(String(r.published_post_id)), global.length ? 'Global: ' + global.join(' | ') : ''].filter(Boolean).join(' | ').slice(0, 2000),\n  updated_at: new Date().toISOString()\n}));\nreturn [{ json: { ok: true, rows, global_recommendations: global } }];"
+        }
+      },
+      {
+        "id": "insertperf-06",
+        "name": "Supabase: insert pattern performance",
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.4,
+        "position": [
+          1700,
+          140
+        ],
+        "parameters": {
+          "url": "https://xxnzqridvepixzireqjh.supabase.co/rest/v1/pattern_performance",
+          "method": "POST",
+          "sendHeaders": true,
+          "headerParameters": {
+            "parameters": [
+              {
+                "name": "apikey",
+                "value": "{{SUPABASE_SERVICE_ROLE_KEY}}"
+              },
+              {
+                "name": "Authorization",
+                "value": "Bearer {{SUPABASE_SERVICE_ROLE_KEY}}"
+              },
+              {
+                "name": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "name": "Prefer",
+                "value": "return=representation"
+              }
+            ]
+          },
+          "sendBody": true,
+          "contentType": "raw",
+          "rawContentType": "application/json",
+          "body": "={{ JSON.stringify($json.rows) }}"
+        },
+        "retryOnFail": true,
+        "maxTries": 3,
+        "waitBetweenTries": 5000
+      },
+      {
+        "id": "done-06",
+        "name": "Code: learning result",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          1980,
+          140
+        ],
+        "parameters": {
+          "mode": "runOnceForAllItems",
+          "jsCode": "const result = {\n  action: 'learning_saved',\n  message: 'WF06 saved pattern performance rows.'\n};\nreturn [{ json: result }];"
+        }
+      },
+      {
+        "id": "skip-06",
+        "name": "Code: no metrics",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          1140,
+          420
+        ],
+        "parameters": {
+          "mode": "runOnceForAllItems",
+          "jsCode": "const result = {\n  action: 'skip',\n  message: 'No metrics available for WF06.'\n};\nreturn [{ json: result }];"
+        }
+      }
+    ],
+    "connections": {
+      "Schedule: learn from performance": {
+        "main": [
+          [
+            {
+              "node": "Supabase: read posts with metrics",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Webhook: manual WF06": {
+        "main": [
+          [
+            {
+              "node": "Supabase: read posts with metrics",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Supabase: read posts with metrics": {
+        "main": [
+          [
+            {
+              "node": "Code: build learning rows",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Code: build learning rows": {
+        "main": [
+          [
+            {
+              "node": "IF: has learning?",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "IF: has learning?": {
+        "main": [
+          [
+            {
+              "node": "Polza: GPT-5.2 learning strategist",
+              "type": "main",
+              "index": 0
+            }
+          ],
+          [
+            {
+              "node": "Code: no metrics",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Polza: GPT-5.2 learning strategist": {
+        "main": [
+          [
+            {
+              "node": "Code: merge learning notes",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Code: merge learning notes": {
+        "main": [
+          [
+            {
+              "node": "Supabase: insert pattern performance",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Supabase: insert pattern performance": {
+        "main": [
+          [
+            {
+              "node": "Code: learning result",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      }
+    },
+    "authors": "Никита Савин",
+    "name": null,
+    "description": null,
+    "autosaved": false,
+    "workflowPublishHistory": [
+      {
+        "createdAt": "2026-05-13T18:34:33.628Z",
+        "id": 139,
+        "workflowId": "9LYOOFiIxZBWjlME",
+        "versionId": "217a81af-f315-412e-8584-99d6d61ac8c8",
+        "event": "activated",
+        "userId": "92e19e2b-362b-418d-8b48-7dcd70395297"
+      },
+      {
+        "createdAt": "2026-05-13T18:34:33.589Z",
+        "id": 138,
+        "workflowId": "9LYOOFiIxZBWjlME",
+        "versionId": "217a81af-f315-412e-8584-99d6d61ac8c8",
+        "event": "deactivated",
+        "userId": "92e19e2b-362b-418d-8b48-7dcd70395297"
+      }
+    ]
   }
 }

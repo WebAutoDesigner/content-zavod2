@@ -1,7 +1,11 @@
 {
+  "updatedAt": "2026-05-14T10:29:18.266Z",
+  "createdAt": "2026-05-13T14:18:48.324Z",
   "id": "NQRIRMhgVQb8OxV2",
   "name": "05 | Delivery Telegram",
+  "description": null,
   "active": true,
+  "isArchived": false,
   "nodes": [
     {
       "id": "sch-05",
@@ -57,11 +61,11 @@
           "parameters": [
             {
               "name": "apikey",
-              "value": "SUPABASE_SECRET_KEY"
+              "value": "{{SUPABASE_SERVICE_ROLE_KEY}}"
             },
             {
               "name": "Authorization",
-              "value": "Bearer SUPABASE_SECRET_KEY"
+              "value": "Bearer {{SUPABASE_SERVICE_ROLE_KEY}}"
             },
             {
               "name": "Content-Type",
@@ -138,11 +142,11 @@
           "parameters": [
             {
               "name": "apikey",
-              "value": "SUPABASE_SECRET_KEY"
+              "value": "{{SUPABASE_SERVICE_ROLE_KEY}}"
             },
             {
               "name": "Authorization",
-              "value": "Bearer SUPABASE_SECRET_KEY"
+              "value": "Bearer {{SUPABASE_SERVICE_ROLE_KEY}}"
             },
             {
               "name": "Content-Type",
@@ -158,7 +162,7 @@
     },
     {
       "id": "send-05",
-      "name": "Code: send Telegram videos",
+      "name": "Code: build Telegram requests",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
@@ -167,7 +171,7 @@
       ],
       "parameters": {
         "mode": "runOnceForAllItems",
-        "jsCode": "const token = \"8646017601:AAH4C_nIHvnYqqdBWXVp_BJYxTbQ609nJ4Q\";\nconst chatId = \"1347534574\";\nconst pkg = $('Code: pick ready package').first().json.package;\nconst assets = $input.all().flatMap(i => Array.isArray(i.json) ? i.json : [i.json]).filter(a => a && a.id);\nconst order = ['reel_close', 'reel_premium', 'reel_viral', 'story'];\nconst label = { reel_close: 'Reel 1 - close pattern', reel_premium: 'Reel 2 - premium', reel_viral: 'Reel 3 - viral', story: 'Story' };\nconst videos = assets.filter(a => order.includes(a.asset_type)).sort((a, b) => order.indexOf(a.asset_type) - order.indexOf(b.asset_type));\nconst sent = [];\nconst failed = [];\n\nasync function tg(method, body) {\n  return await $helpers.httpRequest({\n    method: 'POST',\n    url: 'https://api.telegram.org/bot' + token + '/' + method,\n    headers: { 'Content-Type': 'application/json' },\n    body,\n    json: true,\n  });\n}\n\nfor (const asset of videos) {\n  const url = asset.storage_url || (String(asset.file_path || '').startsWith('http') ? asset.file_path : '');\n  const caption = [label[asset.asset_type] || asset.asset_type, asset.caption || '', asset.cta ? 'CTA: ' + asset.cta : '']\n    .filter(Boolean)\n    .join('\\n\\n')\n    .slice(0, 1000);\n  if (!url) {\n    failed.push({ id: asset.id, asset_type: asset.asset_type, reason: 'No public URL in storage_url/file_path' });\n    continue;\n  }\n  try {\n    await tg('sendVideo', { chat_id: chatId, video: url, caption, supports_streaming: true });\n    sent.push({ id: asset.id, asset_type: asset.asset_type, url });\n  } catch (e) {\n    failed.push({ id: asset.id, asset_type: asset.asset_type, url, reason: e.message || String(e) });\n  }\n}\n\nconst captionLines = videos.map(asset =>\n  [label[asset.asset_type] || asset.asset_type, asset.caption ? 'Caption: ' + asset.caption : '', asset.cta ? 'CTA: ' + asset.cta : '']\n    .filter(Boolean)\n    .join('\\n')\n);\nconst summary = ['Package ready: ' + (pkg.package_date || pkg.id), '', ...captionLines, '', 'Reply: published 1 2 3, revise second, all ok, send links again.']\n  .join('\\n\\n')\n  .slice(0, 3900);\nawait tg('sendMessage', { chat_id: chatId, text: summary });\nif (failed.length) {\n  await tg('sendMessage', { chat_id: chatId, text: 'Some videos failed: ' + failed.map(f => f.asset_type + ': ' + f.reason).join('; ').slice(0, 3200) });\n}\n\nreturn [{ json: { package_id: pkg.id, sent_count: sent.length, failed_count: failed.length, sent, failed } }];"
+        "jsCode": "const token = \"{{TELEGRAM_BOT_TOKEN}}\";\nconst chatId = \"1347534574\";\nconst pkg = $('Code: pick ready package').first().json.package;\nconst assets = $input.all().flatMap(i => Array.isArray(i.json) ? i.json : [i.json]).filter(a => a && a.id);\nconst order = ['reel_close', 'reel_premium', 'reel_viral', 'story'];\nconst label = { reel_close: 'Reel 1 - close pattern', reel_premium: 'Reel 2 - premium', reel_viral: 'Reel 3 - viral', story: 'Story' };\nconst videos = assets.filter(a => order.includes(a.asset_type)).sort((a, b) => order.indexOf(a.asset_type) - order.indexOf(b.asset_type));\nconst requests = [];\nconst failed = [];\nfunction tgUrl(method) { return 'https://api.telegram.org/bot' + token + '/' + method; }\nfor (const asset of videos) {\n  const url = asset.storage_url || (String(asset.file_path || '').startsWith('http') ? asset.file_path : '');\n  const caption = [label[asset.asset_type] || asset.asset_type, asset.caption || '', asset.cta ? 'CTA: ' + asset.cta : '']\n    .filter(Boolean)\n    .join('\\n\\n')\n    .slice(0, 1000);\n  if (!url) {\n    failed.push({ id: asset.id, asset_type: asset.asset_type, reason: 'No public URL in storage_url/file_path' });\n    continue;\n  }\n  requests.push({\n    package_id: pkg.id,\n    kind: 'video',\n    asset_type: asset.asset_type,\n    telegram_url: tgUrl('sendVideo'),\n    telegram_body: { chat_id: chatId, video: url, caption, supports_streaming: true }\n  });\n}\nconst captionLines = videos.map(asset =>\n  [label[asset.asset_type] || asset.asset_type, asset.caption ? 'Caption: ' + asset.caption : '', asset.cta ? 'CTA: ' + asset.cta : '']\n    .filter(Boolean)\n    .join('\\n')\n);\nconst summary = ['Package ready: ' + (pkg.package_date || pkg.id), '', ...captionLines, '', 'Reply: published 1 2 3, revise second, all ok, send links again.']\n  .join('\\n\\n')\n  .slice(0, 3900);\nrequests.push({\n  package_id: pkg.id,\n  kind: 'summary',\n  asset_type: 'summary',\n  telegram_url: tgUrl('sendMessage'),\n  telegram_body: { chat_id: chatId, text: summary }\n});\nif (failed.length) {\n  requests.push({\n    package_id: pkg.id,\n    kind: 'failure_notice',\n    asset_type: 'failure_notice',\n    telegram_url: tgUrl('sendMessage'),\n    telegram_body: { chat_id: chatId, text: 'Some videos failed: ' + failed.map(f => f.asset_type + ': ' + f.reason).join('; ').slice(0, 3200) }\n  });\n}\nreturn requests.map(r => ({ json: r }));"
       }
     },
     {
@@ -187,11 +191,11 @@
           "parameters": [
             {
               "name": "apikey",
-              "value": "SUPABASE_SECRET_KEY"
+              "value": "{{SUPABASE_SERVICE_ROLE_KEY}}"
             },
             {
               "name": "Authorization",
-              "value": "Bearer SUPABASE_SECRET_KEY"
+              "value": "Bearer {{SUPABASE_SERVICE_ROLE_KEY}}"
             },
             {
               "name": "Content-Type",
@@ -238,6 +242,47 @@
       "parameters": {
         "mode": "runOnceForAllItems",
         "jsCode": "return [{ json: { action: 'skip', message: 'No ready packages to deliver.' } }];"
+      }
+    },
+    {
+      "id": "telegram-http-05",
+      "name": "Telegram: send prepared request",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        1640,
+        140
+      ],
+      "parameters": {
+        "url": "={{ $json.telegram_url }}",
+        "method": "POST",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "contentType": "raw",
+        "rawContentType": "application/json",
+        "body": "={{ JSON.stringify($json.telegram_body) }}"
+      }
+    },
+    {
+      "id": "telegram-result-05",
+      "name": "Code: Telegram send result",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1840,
+        140
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "const built = $('Code: build Telegram requests').all().map(i => i.json);\nconst responses = $input.all().map(i => i.json);\nconst pkg = built[0]?.package_id || $('Code: pick ready package').first().json.package.id;\nreturn [{ json: { package_id: pkg, sent_count: responses.length, requested_count: built.length } }];"
       }
     }
   ],
@@ -308,18 +353,7 @@
       "main": [
         [
           {
-            "node": "Code: send Telegram videos",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Code: send Telegram videos": {
-      "main": [
-        [
-          {
-            "node": "Supabase: mark delivered",
+            "node": "Code: build Telegram requests",
             "type": "main",
             "index": 0
           }
@@ -336,6 +370,39 @@
           }
         ]
       ]
+    },
+    "Code: build Telegram requests": {
+      "main": [
+        [
+          {
+            "node": "Telegram: send prepared request",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Telegram: send prepared request": {
+      "main": [
+        [
+          {
+            "node": "Code: Telegram send result",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code: Telegram send result": {
+      "main": [
+        [
+          {
+            "node": "Supabase: mark delivered",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     }
   },
   "settings": {
@@ -347,5 +414,458 @@
     "node:Schedule: deliver package": {
       "recurrenceRules": []
     }
+  },
+  "meta": null,
+  "pinData": null,
+  "versionId": "7f369aa5-bf2a-4c43-abda-3cee0673cae0",
+  "activeVersionId": "7f369aa5-bf2a-4c43-abda-3cee0673cae0",
+  "versionCounter": 20,
+  "triggerCount": 2,
+  "shared": [
+    {
+      "updatedAt": "2026-05-13T14:18:48.326Z",
+      "createdAt": "2026-05-13T14:18:48.326Z",
+      "role": "workflow:owner",
+      "workflowId": "NQRIRMhgVQb8OxV2",
+      "projectId": "kn5sRpsS0RRIAD6L",
+      "project": {
+        "updatedAt": "2026-03-29T20:49:11.770Z",
+        "createdAt": "2026-03-29T20:41:19.939Z",
+        "id": "kn5sRpsS0RRIAD6L",
+        "name": "Никита Савин <nikitagpt2114@gmail.com>",
+        "type": "personal",
+        "icon": null,
+        "description": null,
+        "creatorId": "92e19e2b-362b-418d-8b48-7dcd70395297"
+      }
+    }
+  ],
+  "tags": [],
+  "activeVersion": {
+    "updatedAt": "2026-05-14T10:29:18.267Z",
+    "createdAt": "2026-05-14T10:29:18.267Z",
+    "versionId": "7f369aa5-bf2a-4c43-abda-3cee0673cae0",
+    "workflowId": "NQRIRMhgVQb8OxV2",
+    "nodes": [
+      {
+        "id": "sch-05",
+        "name": "Schedule: deliver package",
+        "type": "n8n-nodes-base.scheduleTrigger",
+        "typeVersion": 1.2,
+        "position": [
+          0,
+          180
+        ],
+        "parameters": {
+          "rule": {
+            "interval": [
+              {
+                "field": "cronExpression",
+                "expression": "30 9 * * *"
+              }
+            ]
+          }
+        }
+      },
+      {
+        "id": "wh-05",
+        "name": "Webhook: manual WF05",
+        "type": "n8n-nodes-base.webhook",
+        "typeVersion": 2,
+        "position": [
+          0,
+          380
+        ],
+        "parameters": {
+          "path": "wf05-deliver-package",
+          "httpMethod": "POST",
+          "responseMode": "lastNode"
+        },
+        "webhookId": "wf05-deliver-package",
+        "onError": "continueRegularOutput"
+      },
+      {
+        "id": "readp-05",
+        "name": "Supabase: read ready package",
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.4,
+        "position": [
+          300,
+          280
+        ],
+        "parameters": {
+          "url": "https://xxnzqridvepixzireqjh.supabase.co/rest/v1/daily_packages?select=*&status=eq.ready&order=package_date.asc&limit=1",
+          "method": "GET",
+          "sendHeaders": true,
+          "headerParameters": {
+            "parameters": [
+              {
+                "name": "apikey",
+                "value": "{{SUPABASE_SERVICE_ROLE_KEY}}"
+              },
+              {
+                "name": "Authorization",
+                "value": "Bearer {{SUPABASE_SERVICE_ROLE_KEY}}"
+              },
+              {
+                "name": "Content-Type",
+                "value": "application/json"
+              }
+            ]
+          }
+        },
+        "alwaysOutputData": true,
+        "retryOnFail": true,
+        "maxTries": 3,
+        "waitBetweenTries": 5000
+      },
+      {
+        "id": "pickp-05",
+        "name": "Code: pick ready package",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          580,
+          280
+        ],
+        "parameters": {
+          "mode": "runOnceForAllItems",
+          "jsCode": "const rows = $input.all().flatMap(i => Array.isArray(i.json) ? i.json : [i.json]).filter(r => r && r.id);\nif (!rows.length) return [{ json: { has_package: false, action: 'skip', message: 'No ready packages to deliver.' } }];\nreturn [{ json: { has_package: true, package: rows[0] } }];"
+        }
+      },
+      {
+        "id": "if-05",
+        "name": "IF: has package?",
+        "type": "n8n-nodes-base.if",
+        "typeVersion": 2.3,
+        "position": [
+          860,
+          280
+        ],
+        "parameters": {
+          "conditions": {
+            "combinator": "and",
+            "options": {
+              "caseSensitive": true,
+              "leftValue": "",
+              "typeValidation": "strict",
+              "version": 2
+            },
+            "conditions": [
+              {
+                "id": "has_package",
+                "leftValue": "={{ $json.has_package }}",
+                "operator": {
+                  "type": "boolean",
+                  "operation": "true",
+                  "singleValue": true
+                }
+              }
+            ]
+          }
+        }
+      },
+      {
+        "id": "reada-05",
+        "name": "Supabase: read package assets",
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.4,
+        "position": [
+          1140,
+          140
+        ],
+        "parameters": {
+          "url": "={{ 'https://xxnzqridvepixzireqjh.supabase.co/rest/v1/package_assets?select=*&daily_package_id=eq.' + $json.package.id + '&asset_type=in.(reel_close,reel_premium,reel_viral,story)&order=created_at.asc' }}",
+          "method": "GET",
+          "sendHeaders": true,
+          "headerParameters": {
+            "parameters": [
+              {
+                "name": "apikey",
+                "value": "{{SUPABASE_SERVICE_ROLE_KEY}}"
+              },
+              {
+                "name": "Authorization",
+                "value": "Bearer {{SUPABASE_SERVICE_ROLE_KEY}}"
+              },
+              {
+                "name": "Content-Type",
+                "value": "application/json"
+              }
+            ]
+          }
+        },
+        "alwaysOutputData": true,
+        "retryOnFail": true,
+        "maxTries": 3,
+        "waitBetweenTries": 5000
+      },
+      {
+        "id": "send-05",
+        "name": "Code: build Telegram requests",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          1420,
+          140
+        ],
+        "parameters": {
+          "mode": "runOnceForAllItems",
+          "jsCode": "const token = \"{{TELEGRAM_BOT_TOKEN}}\";\nconst chatId = \"1347534574\";\nconst pkg = $('Code: pick ready package').first().json.package;\nconst assets = $input.all().flatMap(i => Array.isArray(i.json) ? i.json : [i.json]).filter(a => a && a.id);\nconst order = ['reel_close', 'reel_premium', 'reel_viral', 'story'];\nconst label = { reel_close: 'Reel 1 - close pattern', reel_premium: 'Reel 2 - premium', reel_viral: 'Reel 3 - viral', story: 'Story' };\nconst videos = assets.filter(a => order.includes(a.asset_type)).sort((a, b) => order.indexOf(a.asset_type) - order.indexOf(b.asset_type));\nconst requests = [];\nconst failed = [];\nfunction tgUrl(method) { return 'https://api.telegram.org/bot' + token + '/' + method; }\nfor (const asset of videos) {\n  const url = asset.storage_url || (String(asset.file_path || '').startsWith('http') ? asset.file_path : '');\n  const caption = [label[asset.asset_type] || asset.asset_type, asset.caption || '', asset.cta ? 'CTA: ' + asset.cta : '']\n    .filter(Boolean)\n    .join('\\n\\n')\n    .slice(0, 1000);\n  if (!url) {\n    failed.push({ id: asset.id, asset_type: asset.asset_type, reason: 'No public URL in storage_url/file_path' });\n    continue;\n  }\n  requests.push({\n    package_id: pkg.id,\n    kind: 'video',\n    asset_type: asset.asset_type,\n    telegram_url: tgUrl('sendVideo'),\n    telegram_body: { chat_id: chatId, video: url, caption, supports_streaming: true }\n  });\n}\nconst captionLines = videos.map(asset =>\n  [label[asset.asset_type] || asset.asset_type, asset.caption ? 'Caption: ' + asset.caption : '', asset.cta ? 'CTA: ' + asset.cta : '']\n    .filter(Boolean)\n    .join('\\n')\n);\nconst summary = ['Package ready: ' + (pkg.package_date || pkg.id), '', ...captionLines, '', 'Reply: published 1 2 3, revise second, all ok, send links again.']\n  .join('\\n\\n')\n  .slice(0, 3900);\nrequests.push({\n  package_id: pkg.id,\n  kind: 'summary',\n  asset_type: 'summary',\n  telegram_url: tgUrl('sendMessage'),\n  telegram_body: { chat_id: chatId, text: summary }\n});\nif (failed.length) {\n  requests.push({\n    package_id: pkg.id,\n    kind: 'failure_notice',\n    asset_type: 'failure_notice',\n    telegram_url: tgUrl('sendMessage'),\n    telegram_body: { chat_id: chatId, text: 'Some videos failed: ' + failed.map(f => f.asset_type + ': ' + f.reason).join('; ').slice(0, 3200) }\n  });\n}\nreturn requests.map(r => ({ json: r }));"
+        }
+      },
+      {
+        "id": "patchp-05",
+        "name": "Supabase: mark delivered",
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.4,
+        "position": [
+          1700,
+          140
+        ],
+        "parameters": {
+          "url": "={{ 'https://xxnzqridvepixzireqjh.supabase.co/rest/v1/daily_packages?id=eq.' + $json.package_id }}",
+          "method": "PATCH",
+          "sendHeaders": true,
+          "headerParameters": {
+            "parameters": [
+              {
+                "name": "apikey",
+                "value": "{{SUPABASE_SERVICE_ROLE_KEY}}"
+              },
+              {
+                "name": "Authorization",
+                "value": "Bearer {{SUPABASE_SERVICE_ROLE_KEY}}"
+              },
+              {
+                "name": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "name": "Prefer",
+                "value": "return=representation"
+              }
+            ]
+          },
+          "sendBody": true,
+          "contentType": "raw",
+          "rawContentType": "application/json",
+          "body": "={{ JSON.stringify({status:'delivered',delivered_at:new Date().toISOString(),updated_at:new Date().toISOString()}) }}"
+        },
+        "retryOnFail": true,
+        "maxTries": 3,
+        "waitBetweenTries": 5000
+      },
+      {
+        "id": "done-05",
+        "name": "Code: delivery result",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          1980,
+          140
+        ],
+        "parameters": {
+          "mode": "runOnceForAllItems",
+          "jsCode": "return [{ json: { action: 'delivered', message: 'Package videos sent to Telegram and package marked delivered.' } }];"
+        }
+      },
+      {
+        "id": "skip-05",
+        "name": "Code: no ready package",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          1140,
+          420
+        ],
+        "parameters": {
+          "mode": "runOnceForAllItems",
+          "jsCode": "return [{ json: { action: 'skip', message: 'No ready packages to deliver.' } }];"
+        }
+      },
+      {
+        "id": "telegram-http-05",
+        "name": "Telegram: send prepared request",
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.4,
+        "position": [
+          1640,
+          140
+        ],
+        "parameters": {
+          "url": "={{ $json.telegram_url }}",
+          "method": "POST",
+          "sendHeaders": true,
+          "headerParameters": {
+            "parameters": [
+              {
+                "name": "Content-Type",
+                "value": "application/json"
+              }
+            ]
+          },
+          "sendBody": true,
+          "contentType": "raw",
+          "rawContentType": "application/json",
+          "body": "={{ JSON.stringify($json.telegram_body) }}"
+        }
+      },
+      {
+        "id": "telegram-result-05",
+        "name": "Code: Telegram send result",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          1840,
+          140
+        ],
+        "parameters": {
+          "mode": "runOnceForAllItems",
+          "jsCode": "const built = $('Code: build Telegram requests').all().map(i => i.json);\nconst responses = $input.all().map(i => i.json);\nconst pkg = built[0]?.package_id || $('Code: pick ready package').first().json.package.id;\nreturn [{ json: { package_id: pkg, sent_count: responses.length, requested_count: built.length } }];"
+        }
+      }
+    ],
+    "connections": {
+      "Schedule: deliver package": {
+        "main": [
+          [
+            {
+              "node": "Supabase: read ready package",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Webhook: manual WF05": {
+        "main": [
+          [
+            {
+              "node": "Supabase: read ready package",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Supabase: read ready package": {
+        "main": [
+          [
+            {
+              "node": "Code: pick ready package",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Code: pick ready package": {
+        "main": [
+          [
+            {
+              "node": "IF: has package?",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "IF: has package?": {
+        "main": [
+          [
+            {
+              "node": "Supabase: read package assets",
+              "type": "main",
+              "index": 0
+            }
+          ],
+          [
+            {
+              "node": "Code: no ready package",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Supabase: read package assets": {
+        "main": [
+          [
+            {
+              "node": "Code: build Telegram requests",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Supabase: mark delivered": {
+        "main": [
+          [
+            {
+              "node": "Code: delivery result",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Code: build Telegram requests": {
+        "main": [
+          [
+            {
+              "node": "Telegram: send prepared request",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Telegram: send prepared request": {
+        "main": [
+          [
+            {
+              "node": "Code: Telegram send result",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Code: Telegram send result": {
+        "main": [
+          [
+            {
+              "node": "Supabase: mark delivered",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      }
+    },
+    "authors": "Никита Савин",
+    "name": null,
+    "description": null,
+    "autosaved": false,
+    "workflowPublishHistory": [
+      {
+        "createdAt": "2026-05-14T10:29:18.343Z",
+        "id": 163,
+        "workflowId": "NQRIRMhgVQb8OxV2",
+        "versionId": "7f369aa5-bf2a-4c43-abda-3cee0673cae0",
+        "event": "activated",
+        "userId": "92e19e2b-362b-418d-8b48-7dcd70395297"
+      },
+      {
+        "createdAt": "2026-05-14T10:29:18.307Z",
+        "id": 162,
+        "workflowId": "NQRIRMhgVQb8OxV2",
+        "versionId": "7f369aa5-bf2a-4c43-abda-3cee0673cae0",
+        "event": "deactivated",
+        "userId": "92e19e2b-362b-418d-8b48-7dcd70395297"
+      }
+    ]
   }
 }
