@@ -1,14 +1,17 @@
 {
+  "id": "lfPCbkG4b9u7oPif",
   "name": "01.5 | Video Preparation",
-  "active": false,
-  "isArchived": false,
+  "active": true,
   "nodes": [
     {
       "id": "schedule-015",
       "name": "Schedule: prepare selected video",
       "type": "n8n-nodes-base.scheduleTrigger",
       "typeVersion": 1.2,
-      "position": [0, 180],
+      "position": [
+        0,
+        180
+      ],
       "parameters": {
         "rule": {
           "interval": [
@@ -25,12 +28,17 @@
       "name": "Webhook: manual WF01.5",
       "type": "n8n-nodes-base.webhook",
       "typeVersion": 2,
-      "position": [0, 380],
+      "position": [
+        0,
+        380
+      ],
       "parameters": {
         "path": "wf015-video-preparation",
         "httpMethod": "POST",
         "responseMode": "lastNode"
-      }
+      },
+      "webhookId": "9b88b6b8-bfa1-4643-a2bd-71df9085b679",
+      "onError": "continueRegularOutput"
     },
     {
       "id": "read-candidate-015",
@@ -38,7 +46,10 @@
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.4,
       "alwaysOutputData": true,
-      "position": [300, 280],
+      "position": [
+        300,
+        280
+      ],
       "parameters": {
         "url": "https://xxnzqridvepixzireqjh.supabase.co/rest/v1/competitor_videos?select=*&status=in.(qualified,near_threshold)&selection_type=in.(strict,near_threshold,extreme_viral)&order=selection_score.desc&limit=1",
         "method": "GET",
@@ -59,14 +70,20 @@
             }
           ]
         }
-      }
+      },
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 5000
     },
     {
       "id": "normalize-video-015",
       "name": "Code: normalize candidate",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
-      "position": [580, 280],
+      "position": [
+        580,
+        280
+      ],
       "parameters": {
         "mode": "runOnceForAllItems",
         "jsCode": "const first = $input.first()?.json;\nconst video = Array.isArray(first) ? first[0] : first;\n\nif (!video || !video.id) {\n  return [{ json: { has_video: false, action: 'no_selected_video', message: 'No selected competitor videos waiting for preparation.' } }];\n}\n\nreturn [{\n  json: {\n    has_video: true,\n    video_id: video.id,\n    batch_id: video.batch_id,\n    competitor_account_id: video.competitor_account_id,\n    video_url: video.video_url,\n    thumbnail_url: video.thumbnail_url,\n    selection_type: video.selection_type,\n    selection_score: video.selection_score,\n    selection_reason: video.selection_reason,\n    views: video.views,\n    views_multiplier: video.views_multiplier,\n    caption: video.caption || ''\n  }\n}];"
@@ -77,7 +94,10 @@
       "name": "IF: has video?",
       "type": "n8n-nodes-base.if",
       "typeVersion": 2.3,
-      "position": [860, 280],
+      "position": [
+        860,
+        280
+      ],
       "parameters": {
         "conditions": {
           "combinator": "and",
@@ -106,7 +126,10 @@
       "name": "Supabase: lock video as raw_saved",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.4,
-      "position": [1140, 140],
+      "position": [
+        1140,
+        140
+      ],
       "parameters": {
         "url": "={{ 'https://xxnzqridvepixzireqjh.supabase.co/rest/v1/competitor_videos?id=eq.' + $json.video_id }}",
         "method": "PATCH",
@@ -135,7 +158,10 @@
         "contentType": "raw",
         "rawContentType": "application/json",
         "body": "={{ JSON.stringify({ status: 'raw_saved', updated_at: new Date().toISOString() }) }}"
-      }
+      },
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 5000
     },
     {
       "id": "prepare-media-015",
@@ -143,7 +169,10 @@
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.4,
       "onError": "continueRegularOutput",
-      "position": [1420, 140],
+      "position": [
+        1420,
+        140
+      ],
       "parameters": {
         "url": "http://85.239.59.252:8003/prepare_competitor_video",
         "method": "POST",
@@ -159,15 +188,21 @@
         "sendBody": true,
         "contentType": "raw",
         "rawContentType": "application/json",
-        "body": "={{ JSON.stringify({ video_id: $('Code: normalize candidate').item.json.video_id, video_url: $('Code: normalize candidate').item.json.video_url, thumbnail_url: $('Code: normalize candidate').item.json.thumbnail_url, polza_api_key: 'POLZA_API_KEY' }) }}"
-      }
+        "body": "={{ JSON.stringify({ video_id: $('Code: normalize candidate').item.json.video_id, video_url: $('Code: normalize candidate').item.json.video_url, thumbnail_url: $('Code: normalize candidate').item.json.thumbnail_url, polza_api_key: 'POLZA_API_KEY', analysis_instructions: { language: 'ru', purpose: 'competitor viral reel analysis for premium custom tables', must_extract: ['speech transcript with timestamps','on-screen text/OCR','first-frame hook','scene timeline','hands/install/product/body-without-face visual cues','brand/logo risks','face/person risks','audio mood/BPM/energy/drop','why this could hold attention'], do_not_discard: 'Do not discard videos only because hands/body/logo appear; mark risks and let WF02 decide.' } }) }}"
+      },
+      "retryOnFail": true,
+      "maxTries": 2,
+      "waitBetweenTries": 10000
     },
     {
       "id": "build-analysis-015",
       "name": "Code: build analysis row",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
-      "position": [1700, 140],
+      "position": [
+        1700,
+        140
+      ],
       "parameters": {
         "mode": "runOnceForAllItems",
         "jsCode": "const prep = $input.first().json;\nconst source = $('Code: normalize candidate').item.json;\n\nif (!prep.success) {\n  return [{\n    json: {\n      ok: false,\n      video_id: source.video_id,\n      batch_id: source.batch_id,\n      error: prep.error || prep.message || 'Video preparation failed',\n      update_body: { status: 'failed', updated_at: new Date().toISOString() }\n    }\n  }];\n}\n\nconst now = new Date().toISOString();\nconst transcript = prep.transcript || {};\nconst vision = prep.vision || {};\nconst audio = prep.audio || {};\nconst files = prep.files || {};\n\nconst sceneTimeline = Array.isArray(vision.scene_timeline_json) ? vision.scene_timeline_json : [];\nif (Array.isArray(vision.visual_hooks) && vision.visual_hooks.length) {\n  sceneTimeline.push({ type: 'visual_hooks', items: vision.visual_hooks });\n}\nif (Array.isArray(vision.brand_or_logo_risks) && vision.brand_or_logo_risks.length) {\n  sceneTimeline.push({ type: 'brand_or_logo_risks', items: vision.brand_or_logo_risks });\n}\nif (Array.isArray(vision.face_or_person_risks) && vision.face_or_person_risks.length) {\n  sceneTimeline.push({ type: 'face_or_person_risks', items: vision.face_or_person_risks });\n}\n\nconst analysis = {\n  competitor_video_id: source.video_id,\n  audio_storage_path: files.audio || null,\n  keyframes_storage_paths: files.frames || [],\n  preview_storage_path: files.preview || null,\n  speech_transcript: transcript.text || '',\n  speech_segments_json: transcript.segments || [],\n  screen_text_json: vision.screen_text_json || [],\n  scene_timeline_json: sceneTimeline,\n  visual_summary: vision.visual_summary || '',\n  audio_bpm: audio.bpm || null,\n  audio_energy: audio.energy || null,\n  audio_genre: audio.genre || null,\n  audio_drop_seconds: audio.drop_seconds || audio.drop_time || null,\n  ocr_confidence: vision.ocr_confidence || null,\n  transcription_model: prep.models?.transcription || 'openai/gpt-4o-transcribe',\n  vision_model: prep.models?.vision || 'openai/gpt-5.2',\n  audio_analysis_tool: audio.tool || 'ffmpeg-server-basic-audio',\n  status: 'ready_for_pattern',\n  created_at: now,\n  updated_at: now\n};\n\nreturn [{\n  json: {\n    ok: true,\n    video_id: source.video_id,\n    batch_id: source.batch_id,\n    raw_video_storage_path: files.original || null,\n    analysis,\n    update_body: {\n      status: 'ready_for_pattern',\n      raw_video_storage_path: files.original || null,\n      updated_at: now\n    }\n  }\n}];"
@@ -178,7 +213,10 @@
       "name": "IF: preparation ok?",
       "type": "n8n-nodes-base.if",
       "typeVersion": 2.3,
-      "position": [1980, 140],
+      "position": [
+        1980,
+        140
+      ],
       "parameters": {
         "conditions": {
           "combinator": "and",
@@ -207,7 +245,10 @@
       "name": "Supabase: insert video analysis",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.4,
-      "position": [2260, 20],
+      "position": [
+        2260,
+        20
+      ],
       "parameters": {
         "url": "https://xxnzqridvepixzireqjh.supabase.co/rest/v1/competitor_video_analysis",
         "method": "POST",
@@ -236,14 +277,20 @@
         "contentType": "raw",
         "rawContentType": "application/json",
         "body": "={{ JSON.stringify($json.analysis) }}"
-      }
+      },
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 5000
     },
     {
       "id": "mark-ready-015",
       "name": "Supabase: mark video ready",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.4,
-      "position": [2540, 20],
+      "position": [
+        2540,
+        20
+      ],
       "parameters": {
         "url": "={{ 'https://xxnzqridvepixzireqjh.supabase.co/rest/v1/competitor_videos?id=eq.' + $('Code: build analysis row').item.json.video_id }}",
         "method": "PATCH",
@@ -272,14 +319,20 @@
         "contentType": "raw",
         "rawContentType": "application/json",
         "body": "={{ JSON.stringify($('Code: build analysis row').item.json.update_body) }}"
-      }
+      },
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 5000
     },
     {
       "id": "mark-failed-015",
       "name": "Supabase: mark preparation failed",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.4,
-      "position": [2260, 260],
+      "position": [
+        2260,
+        260
+      ],
       "parameters": {
         "url": "={{ 'https://xxnzqridvepixzireqjh.supabase.co/rest/v1/competitor_videos?id=eq.' + $json.video_id }}",
         "method": "PATCH",
@@ -308,14 +361,20 @@
         "contentType": "raw",
         "rawContentType": "application/json",
         "body": "={{ JSON.stringify($json.update_body) }}"
-      }
+      },
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 5000
     },
     {
       "id": "no-video-015",
       "name": "Code: no selected video",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
-      "position": [1140, 420],
+      "position": [
+        1140,
+        420
+      ],
       "parameters": {
         "mode": "runOnceForAllItems",
         "jsCode": "return [{ json: { action: 'skip', message: 'No selected videos are waiting for WF01.5.' } }];"
@@ -449,8 +508,13 @@
     }
   },
   "settings": {
-    "executionOrder": "v1"
+    "executionOrder": "v1",
+    "callerPolicy": "workflowsFromSameOwner",
+    "availableInMCP": false
   },
-  "tags": []
+  "staticData": {
+    "node:Schedule: prepare selected video": {
+      "recurrenceRules": []
+    }
+  }
 }
-

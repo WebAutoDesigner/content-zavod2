@@ -37,7 +37,8 @@
         "httpMethod": "POST",
         "responseMode": "lastNode"
       },
-      "webhookId": "22f49cf9-ebfc-4be8-9684-3afaa4890769"
+      "webhookId": "22f49cf9-ebfc-4be8-9684-3afaa4890769",
+      "onError": "continueRegularOutput"
     },
     {
       "id": "readposts-06",
@@ -56,11 +57,11 @@
           "parameters": [
             {
               "name": "apikey",
-              "value": "<SUPABASE_SERVICE_ROLE_KEY>"
+              "value": "SUPABASE_SECRET_KEY"
             },
             {
               "name": "Authorization",
-              "value": "Bearer <SUPABASE_SERVICE_ROLE_KEY>"
+              "value": "Bearer SUPABASE_SECRET_KEY"
             },
             {
               "name": "Content-Type",
@@ -69,7 +70,10 @@
           ]
         }
       },
-      "alwaysOutputData": true
+      "alwaysOutputData": true,
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 5000
     },
     {
       "id": "learn-06",
@@ -98,10 +102,10 @@
         "conditions": {
           "combinator": "and",
           "options": {
-            "caseSensitive": true,
+            "version": 2,
             "leftValue": "",
-            "typeValidation": "strict",
-            "version": 2
+            "caseSensitive": true,
+            "typeValidation": "strict"
           },
           "conditions": [
             {
@@ -115,7 +119,8 @@
             }
           ]
         }
-      }
+      },
+      "onError": "continueErrorOutput"
     },
     {
       "id": "polza-06",
@@ -134,7 +139,7 @@
           "parameters": [
             {
               "name": "Authorization",
-              "value": "Bearer <POLZA_API_KEY>"
+              "value": "Bearer POLZA_API_KEY"
             },
             {
               "name": "Content-Type",
@@ -146,7 +151,10 @@
         "contentType": "raw",
         "rawContentType": "application/json",
         "body": "={{ JSON.stringify($json.polza_body) }}"
-      }
+      },
+      "retryOnFail": true,
+      "maxTries": 2,
+      "waitBetweenTries": 10000
     },
     {
       "id": "merge-06",
@@ -179,11 +187,11 @@
           "parameters": [
             {
               "name": "apikey",
-              "value": "<SUPABASE_SERVICE_ROLE_KEY>"
+              "value": "SUPABASE_SECRET_KEY"
             },
             {
               "name": "Authorization",
-              "value": "Bearer <SUPABASE_SERVICE_ROLE_KEY>"
+              "value": "Bearer SUPABASE_SECRET_KEY"
             },
             {
               "name": "Content-Type",
@@ -199,7 +207,10 @@
         "contentType": "raw",
         "rawContentType": "application/json",
         "body": "={{ JSON.stringify($json.rows) }}"
-      }
+      },
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 5000
     },
     {
       "id": "done-06",
@@ -212,7 +223,7 @@
       ],
       "parameters": {
         "mode": "runOnceForAllItems",
-        "jsCode": "return[{json:{action:'learning_saved',message:'WF06 saved pattern performance rows.'}}];"
+        "jsCode": "const result = {\n  action: 'learning_saved',\n  message: 'WF06 saved pattern performance rows.'\n};\nreturn [{ json: result }];"
       }
     },
     {
@@ -226,7 +237,7 @@
       ],
       "parameters": {
         "mode": "runOnceForAllItems",
-        "jsCode": "return[{json:{action:'skip',message:'No metrics available for WF06.'}}];"
+        "jsCode": "const result = {\n  action: 'skip',\n  message: 'No metrics available for WF06.'\n};\nreturn [{ json: result }];"
       }
     }
   ],
@@ -332,5 +343,9 @@
     "callerPolicy": "workflowsFromSameOwner",
     "availableInMCP": false
   },
-  "exportedAt": "2026-05-13T18:02:51.640Z"
+  "staticData": {
+    "node:Schedule: learn from performance": {
+      "recurrenceRules": []
+    }
+  }
 }

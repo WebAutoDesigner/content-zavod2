@@ -1,14 +1,17 @@
 {
+  "id": "Wm9gHnR8qCJIa00D",
   "name": "03 | Variant Factory",
-  "active": false,
-  "isArchived": false,
+  "active": true,
   "nodes": [
     {
       "id": "schedule-03",
       "name": "Schedule: generate variants",
       "type": "n8n-nodes-base.scheduleTrigger",
       "typeVersion": 1.2,
-      "position": [0, 180],
+      "position": [
+        0,
+        180
+      ],
       "parameters": {
         "rule": {
           "interval": [
@@ -25,12 +28,17 @@
       "name": "Webhook: manual WF03",
       "type": "n8n-nodes-base.webhook",
       "typeVersion": 2,
-      "position": [0, 380],
+      "position": [
+        0,
+        380
+      ],
       "parameters": {
         "path": "wf03-variant-factory",
         "httpMethod": "POST",
         "responseMode": "lastNode"
-      }
+      },
+      "webhookId": "1f25ae95-6019-4d8e-b8ba-e0fef44a2dd9",
+      "onError": "continueRegularOutput"
     },
     {
       "id": "read-pattern-03",
@@ -38,9 +46,12 @@
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.4,
       "alwaysOutputData": true,
-      "position": [300, 280],
+      "position": [
+        300,
+        280
+      ],
       "parameters": {
-        "url": "https://xxnzqridvepixzireqjh.supabase.co/rest/v1/content_patterns?select=*,pattern_recipes(*),content_variants!left(id)&content_variants.id=is.null&order=pattern_score.desc&limit=1",
+        "url": "https://xxnzqridvepixzireqjh.supabase.co/rest/v1/content_patterns?select=*,pattern_recipes(*),pattern_performance(views_multiplier,engagement_score,lead_score,learning_result,weight_delta,notes,created_at),content_variants!left(id)&content_variants.id=is.null&order=pattern_score.desc&limit=1",
         "method": "GET",
         "sendHeaders": true,
         "headerParameters": {
@@ -59,14 +70,20 @@
             }
           ]
         }
-      }
+      },
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 5000
     },
     {
       "id": "normalize-pattern-03",
       "name": "Code: normalize pattern",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
-      "position": [580, 280],
+      "position": [
+        580,
+        280
+      ],
       "parameters": {
         "mode": "runOnceForAllItems",
         "jsCode": "const first = $input.first()?.json;\nconst pattern = Array.isArray(first) ? first[0] : first;\nif (!pattern || !pattern.id) {\n  return [{ json: { has_pattern: false, action: 'no_pattern', message: 'No content_patterns without variants.' } }];\n}\nreturn [{ json: { has_pattern: true, pattern } }];"
@@ -77,7 +94,10 @@
       "name": "IF: has pattern?",
       "type": "n8n-nodes-base.if",
       "typeVersion": 2.3,
-      "position": [860, 280],
+      "position": [
+        860,
+        280
+      ],
       "parameters": {
         "conditions": {
           "combinator": "and",
@@ -106,10 +126,13 @@
       "name": "Code: build variant prompt",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
-      "position": [1140, 140],
+      "position": [
+        1140,
+        140
+      ],
       "parameters": {
         "mode": "runOnceForAllItems",
-        "jsCode": "const pattern = $json.pattern;\nconst recipes = Array.isArray(pattern.pattern_recipes) ? pattern.pattern_recipes : [];\nconst source = {\n  pattern: {\n    id: pattern.id,\n    batch_id: pattern.batch_id,\n    competitor_video_id: pattern.competitor_video_id,\n    hook_pattern: pattern.hook_pattern,\n    visual_pattern: pattern.visual_pattern,\n    scenario_pattern: pattern.scenario_pattern,\n    retention_pattern: pattern.retention_pattern,\n    desire_trigger: pattern.desire_trigger,\n    proof_pattern: pattern.proof_pattern,\n    audio_pattern: pattern.audio_pattern,\n    cta_pattern: pattern.cta_pattern,\n    adaptation_recipe: pattern.adaptation_recipe,\n    forbidden_elements_json: pattern.forbidden_elements_json || [],\n    caution_elements_json: pattern.caution_elements_json || [],\n    pattern_score: pattern.pattern_score,\n    virality_score: pattern.virality_score,\n    premium_score: pattern.premium_score,\n    similarity_score: pattern.similarity_score\n  },\n  recipes: recipes.map(r => ({\n    id: r.id,\n    recipe_type: r.recipe_type,\n    title: r.title,\n    first_frame_formula: r.first_frame_formula,\n    scene_formula_json: r.scene_formula_json || [],\n    screen_text_formula: r.screen_text_formula,\n    audio_formula: r.audio_formula,\n    cta_formula: r.cta_formula,\n    what_to_keep_json: r.what_to_keep_json || [],\n    what_to_change_json: r.what_to_change_json || [],\n    what_not_to_copy_json: r.what_not_to_copy_json || [],\n    usable_for_products_json: r.usable_for_products_json || [],\n    score: r.score\n  }))\n};\nconst schema = {\n  reels: [{ group: 'close|viral|premium', number: 1, first_frame: '', hook_text: '', screen_text_json: [], scene_plan_json: [], caption: '', cta: '', borrowed_elements_json: [], changed_elements_json: [], forbidden_checks_json: [] }],\n  stories: [{ number: 1, first_frame: '', hook_text: '', screen_text_json: [], scene_plan_json: [], caption: '', cta: '', borrowed_elements_json: [], changed_elements_json: [], forbidden_checks_json: [] }],\n  captions: [{ group: 'close|viral|premium', caption: '', cta: '', hook_text: '' }]\n};\nconst system = 'You are an elite content factory strategist. Generate specific content ideas from a competitor-derived pattern. Return only valid JSON. Text fields must be Russian.';\nconst user = [\n  'Generate a content bank for premium tables from this pattern.',\n  'Need exactly 12 Reels: 4 close, 4 viral, 4 premium. Each group must use different first frames.',\n  'Need exactly 4 Story ideas tied to the same pattern.',\n  'Need exactly 3 captions/CTA: one close, one viral, one premium.',\n  'Do not copy exact words, frames, third-party logos, faces or brand identity. Keep successful structure, change execution.',\n  'Every reel must include first_frame, hook_text, screen_text_json, scene_plan_json, caption, cta, borrowed_elements_json, changed_elements_json, forbidden_checks_json.',\n  'Return JSON matching this shape:',\n  JSON.stringify(schema),\n  'SOURCE:',\n  JSON.stringify(source)\n].join('\\n');\nreturn [{ json: { pattern_id: pattern.id, batch_id: pattern.batch_id, competitor_video_id: pattern.competitor_video_id, recipes, polza_body: { model: 'openai/gpt-5.2', messages: [{ role: 'system', content: system }, { role: 'user', content: user }], response_format: { type: 'json_object' }, temperature: 0.55 } } }];"
+        "jsCode": "const pattern = $json.pattern;\nconst recipes = Array.isArray(pattern.pattern_recipes) ? pattern.pattern_recipes : [];\nconst learningRows = Array.isArray(pattern.pattern_performance) ? pattern.pattern_performance : [];\nconst source = {\n  pattern: {\n    id: pattern.id,\n    batch_id: pattern.batch_id,\n    competitor_video_id: pattern.competitor_video_id,\n    hook_pattern: pattern.hook_pattern,\n    visual_pattern: pattern.visual_pattern,\n    scenario_pattern: pattern.scenario_pattern,\n    retention_pattern: pattern.retention_pattern,\n    desire_trigger: pattern.desire_trigger,\n    proof_pattern: pattern.proof_pattern,\n    audio_pattern: pattern.audio_pattern,\n    cta_pattern: pattern.cta_pattern,\n    adaptation_recipe: pattern.adaptation_recipe,\n    forbidden_elements_json: pattern.forbidden_elements_json || [],\n    caution_elements_json: pattern.caution_elements_json || [],\n    pattern_score: pattern.pattern_score,\n    virality_score: pattern.virality_score,\n    premium_score: pattern.premium_score,\n    similarity_score: pattern.similarity_score\n  },\n  recipes: recipes.map(r => ({\n    id: r.id,\n    recipe_type: r.recipe_type,\n    title: r.title,\n    first_frame_formula: r.first_frame_formula,\n    scene_formula_json: r.scene_formula_json || [],\n    screen_text_formula: r.screen_text_formula,\n    audio_formula: r.audio_formula,\n    cta_formula: r.cta_formula,\n    what_to_keep_json: r.what_to_keep_json || [],\n    what_to_change_json: r.what_to_change_json || [],\n    what_not_to_copy_json: r.what_not_to_copy_json || [],\n    usable_for_products_json: r.usable_for_products_json || [],\n    score: r.score\n  })),\n  learning: learningRows.slice(0, 12).map(x => ({\n    views_multiplier: x.views_multiplier,\n    engagement_score: x.engagement_score,\n    lead_score: x.lead_score,\n    learning_result: x.learning_result,\n    weight_delta: x.weight_delta,\n    notes: x.notes\n  }))\n};\nconst schema = {\n  reels: [{\n    group: 'close|viral|premium',\n    number: 1,\n    first_frame: '',\n    hook_text: '',\n    screen_text_json: [],\n    scene_plan_json: [],\n    caption: '',\n    cta: '',\n    viral_mechanism: '',\n    source_pattern_preserved_json: [],\n    uniqueness_moves_json: [],\n    borrowed_elements_json: [],\n    changed_elements_json: [],\n    forbidden_checks_json: [],\n    render_notes: '',\n    ai_video_prompt: ''\n  }],\n  stories: [{\n    number: 1,\n    first_frame: '',\n    hook_text: '',\n    screen_text_json: [],\n    scene_plan_json: [],\n    caption: '',\n    cta: '',\n    viral_mechanism: '',\n    borrowed_elements_json: [],\n    changed_elements_json: [],\n    forbidden_checks_json: []\n  }],\n  captions: [{ group: 'close|viral|premium', caption: '', cta: '', hook_text: '' }]\n};\nconst system = [\n  'You are the top strategist of a viral content factory for premium custom tables.',\n  'Your job is not to invent random ideas. Your job is to transfer the competitor video mechanism into unique, usable, high-retention content.',\n  'Be concrete enough that an editor/render workflow can make the video without asking questions.',\n  'Text fields must be Russian. Return only valid JSON.'\n].join(' ');\nconst user = [\n  'Generate a production-ready content bank from this competitor-derived pattern.',\n  'Main goal: maximum views, retention, virality and leads. Premium feel is important, but virality is priority #1.',\n  'Need exactly 12 Reels: 4 close_to_competitor, 4 more_viral, 4 more_premium.',\n  'Map groups exactly as: close, viral, premium. In each group use 4 different first-frame mechanics, not just different wording.',\n  'Need exactly 4 Story ideas tied to the same pattern.',\n  'Need exactly 3 captions/CTA: one close, one viral, one premium. First paragraph must make people keep reading.',\n  'For close variants: preserve timing, emotion, scene logic and hook mechanism, but change words, product, framing, branding and execution.',\n  'For viral variants: push stronger first 1-2 seconds, conflict/curiosity/proof/payoff, but keep the source pattern readable.',\n  'For premium variants: make the table feel expensive, custom, desirable and gift/status-worthy without becoming boring.',\n  'Respect learning notes: increase what worked, decrease what failed, but never kill an extreme viral mechanism only because it is less premium.',\n  'Forbidden: exact copied text, exact copied frame, third-party logo as key element, face/person as key element, generic motivation, weak CTA, vague scene plan.',\n  'If competitor uses hands/install/body without face, you may keep that type of visual as a safe pattern.',\n  'Every reel must include source_pattern_preserved_json, uniqueness_moves_json, render_notes, and ai_video_prompt. ai_video_prompt must be useful only if WF03.5 later chooses ai_video.',\n  'Return JSON matching this shape:',\n  JSON.stringify(schema),\n  'SOURCE:',\n  JSON.stringify(source)\n].join('\\n');\nreturn [{\n  json: {\n    pattern_id: pattern.id,\n    batch_id: pattern.batch_id,\n    competitor_video_id: pattern.competitor_video_id,\n    recipes,\n    learningRows,\n    polza_body: {\n      model: 'openai/gpt-5.2',\n      messages: [{ role: 'system', content: system }, { role: 'user', content: user }],\n      response_format: { type: 'json_object' },\n      temperature: 0.45\n    }\n  }\n}];"
       }
     },
     {
@@ -118,7 +141,10 @@
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.4,
       "onError": "continueRegularOutput",
-      "position": [1420, 140],
+      "position": [
+        1420,
+        140
+      ],
       "parameters": {
         "url": "https://polza.ai/api/v1/chat/completions",
         "method": "POST",
@@ -139,14 +165,20 @@
         "contentType": "raw",
         "rawContentType": "application/json",
         "body": "={{ JSON.stringify($json.polza_body) }}"
-      }
+      },
+      "retryOnFail": true,
+      "maxTries": 2,
+      "waitBetweenTries": 10000
     },
     {
       "id": "parse-variants-03",
       "name": "Code: parse variants",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
-      "position": [1700, 140],
+      "position": [
+        1700,
+        140
+      ],
       "parameters": {
         "mode": "runOnceForAllItems",
         "jsCode": "const source = $('Code: build variant prompt').item.json;\nconst response = $input.first()?.json || {};\nconst raw = response.choices?.[0]?.message?.content || response.message?.content || response.content || '';\nfunction arr(v) { return Array.isArray(v) ? v : (v == null || v === '' ? [] : [v]); }\nfunction parse(text) {\n  const clean = String(text || '').trim().replace(/^```json\\s*/i, '').replace(/^```\\s*/i, '').replace(/```$/i, '').trim();\n  try { return JSON.parse(clean); } catch (e) {}\n  const start = clean.indexOf('{'); const end = clean.lastIndexOf('}');\n  if (start >= 0 && end > start) return JSON.parse(clean.slice(start, end + 1));\n  throw new Error('Model did not return parseable JSON');\n}\nlet parsed;\ntry { parsed = parse(raw || JSON.stringify(response)); } catch (error) { return [{ json: { ok: false, error: error.message, raw_model_response: String(raw).slice(0, 2500) } }]; }\nconst recipeByGroup = new Map();\nfor (const r of source.recipes || []) {\n  if (r.recipe_type === 'close_to_competitor') recipeByGroup.set('close', r.id);\n  if (r.recipe_type === 'more_viral') recipeByGroup.set('viral', r.id);\n  if (r.recipe_type === 'more_premium') recipeByGroup.set('premium', r.id);\n  if (r.recipe_type === 'story') recipeByGroup.set('story', r.id);\n}\nconst now = new Date().toISOString();\nconst rows = [];\nfunction base(v, group, format, n) {\n  return {\n    batch_id: source.batch_id,\n    pattern_recipe_id: recipeByGroup.get(group) || null,\n    content_pattern_id: source.pattern_id,\n    source_competitor_video_id: source.competitor_video_id,\n    variant_group: group,\n    variant_number: Number(n) || null,\n    format,\n    first_frame: String(v.first_frame || ''),\n    hook_text: String(v.hook_text || ''),\n    screen_text_json: arr(v.screen_text_json),\n    scene_plan_json: arr(v.scene_plan_json),\n    caption: String(v.caption || ''),\n    cta: String(v.cta || ''),\n    source_refs_json: [{ content_pattern_id: source.pattern_id, competitor_video_id: source.competitor_video_id }],\n    borrowed_elements_json: arr(v.borrowed_elements_json),\n    changed_elements_json: arr(v.changed_elements_json),\n    forbidden_checks_json: arr(v.forbidden_checks_json),\n    generation_model: 'openai/gpt-5.2',\n    status: 'idea_created',\n    created_at: now,\n    updated_at: now\n  };\n}\nfor (const [idx, v] of arr(parsed.reels).entries()) {\n  const g = ['close', 'viral', 'premium'].includes(v.group) ? v.group : (idx < 4 ? 'close' : idx < 8 ? 'viral' : 'premium');\n  rows.push(base(v, g, 'reel', v.number || ((idx % 4) + 1)));\n}\nfor (const [idx, v] of arr(parsed.stories).entries()) rows.push(base(v, 'story', 'story', v.number || idx + 1));\nfor (const [idx, v] of arr(parsed.captions).entries()) {\n  const g = ['close', 'viral', 'premium'].includes(v.group) ? v.group : ['close', 'viral', 'premium'][idx % 3];\n  rows.push(base({ ...v, first_frame: '', screen_text_json: [], scene_plan_json: [], borrowed_elements_json: [], changed_elements_json: [], forbidden_checks_json: [] }, g, 'caption', idx + 1));\n}\nreturn [{ json: { ok: true, pattern_id: source.pattern_id, row_count: rows.length, rows } }];"
@@ -157,7 +189,10 @@
       "name": "IF: variants parsed?",
       "type": "n8n-nodes-base.if",
       "typeVersion": 2.3,
-      "position": [1980, 140],
+      "position": [
+        1980,
+        140
+      ],
       "parameters": {
         "conditions": {
           "combinator": "and",
@@ -186,7 +221,10 @@
       "name": "Supabase: insert content variants",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.4,
-      "position": [2260, 20],
+      "position": [
+        2260,
+        20
+      ],
       "parameters": {
         "url": "https://xxnzqridvepixzireqjh.supabase.co/rest/v1/content_variants",
         "method": "POST",
@@ -215,14 +253,20 @@
         "contentType": "raw",
         "rawContentType": "application/json",
         "body": "={{ JSON.stringify($json.rows) }}"
-      }
+      },
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 5000
     },
     {
       "id": "result-03",
       "name": "Code: variants created result",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
-      "position": [2540, 20],
+      "position": [
+        2540,
+        20
+      ],
       "parameters": {
         "mode": "runOnceForAllItems",
         "jsCode": "const inserted = $input.first()?.json;\nconst rows = Array.isArray(inserted) ? inserted : [inserted].filter(Boolean);\nreturn [{ json: { action: 'variants_created', inserted_count: rows.length, message: `WF03 created ${rows.length} content_variants.` } }];"
@@ -233,7 +277,10 @@
       "name": "Code: variant generation failed",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
-      "position": [2260, 260],
+      "position": [
+        2260,
+        260
+      ],
       "parameters": {
         "mode": "runOnceForAllItems",
         "jsCode": "return [{ json: { action: 'variant_generation_failed', error: $json.error || 'Unknown WF03 generation error' } }];"
@@ -244,7 +291,10 @@
       "name": "Code: no pattern",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
-      "position": [1140, 420],
+      "position": [
+        1140,
+        420
+      ],
       "parameters": {
         "mode": "runOnceForAllItems",
         "jsCode": "return [{ json: { action: 'skip', message: 'No generated-ready patterns are waiting for WF03.' } }];"
@@ -378,8 +428,13 @@
     }
   },
   "settings": {
-    "executionOrder": "v1"
+    "executionOrder": "v1",
+    "callerPolicy": "workflowsFromSameOwner",
+    "availableInMCP": false
   },
-  "tags": []
+  "staticData": {
+    "node:Schedule: generate variants": {
+      "recurrenceRules": []
+    }
+  }
 }
-

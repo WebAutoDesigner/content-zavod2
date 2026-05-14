@@ -17,7 +17,8 @@
         "httpMethod": "POST",
         "responseMode": "lastNode"
       },
-      "webhookId": "8a4158d9-706d-4df2-a2bd-2d0a7e5c4a93"
+      "webhookId": "8a4158d9-706d-4df2-a2bd-2d0a7e5c4a93",
+      "onError": "continueRegularOutput"
     },
     {
       "id": "readp-055",
@@ -36,11 +37,11 @@
           "parameters": [
             {
               "name": "apikey",
-              "value": "<SUPABASE_SERVICE_ROLE_KEY>"
+              "value": "SUPABASE_SECRET_KEY"
             },
             {
               "name": "Authorization",
-              "value": "Bearer <SUPABASE_SERVICE_ROLE_KEY>"
+              "value": "Bearer SUPABASE_SECRET_KEY"
             },
             {
               "name": "Content-Type",
@@ -49,7 +50,10 @@
           ]
         }
       },
-      "alwaysOutputData": true
+      "alwaysOutputData": true,
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 5000
     },
     {
       "id": "build-llm-055",
@@ -62,7 +66,7 @@
       ],
       "parameters": {
         "mode": "runOnceForAllItems",
-        "jsCode": "const body = $('Webhook: Telegram feedback').item.json.body || {};\nconst msg = body.message?.text || body.text || body.message || JSON.stringify(body);\nconst pkg = Array.isArray($input.first()?.json) ? $input.first().json[0] : $input.first()?.json;\nconst system = [\n  'You parse short natural Russian Telegram commands for a content factory owner.',\n  'Understand profanity, typos, mixed Russian/English, and casual phrases.',\n  'Supported intents: published, revise, approve, reject, archive, ask_status, resend_links.',\n  'Extract target assets if mentioned: reel_1, reel_2, reel_3, story, all, or unknown.',\n  'If user says the post was published, intent=published. If they complain about background/text/cheap look/hook/music/video, intent=revise.',\n  'If confidence is low, use ask_status and explain briefly.',\n  'Return only valid JSON.'\n].join(' ');\nconst schema = {\n  intent: 'published|revise|approve|reject|archive|ask_status|resend_links',\n  target_assets: [],\n  change_request: '',\n  feedback_tags: [],\n  confidence: 0,\n  should_create_published_posts: false,\n  needs_clarification: false,\n  short_reply: ''\n};\nconst user = [\n  'Latest package context:',\n  JSON.stringify({daily_package_id: pkg?.id || null, status: pkg?.status || null, package_date: pkg?.package_date || null}),\n  'Message:',\n  msg,\n  'Return JSON matching schema:',\n  JSON.stringify(schema)\n].join('\\n');\nreturn [{ json: { daily_package_id: pkg?.id || null, raw_message: msg, polza_body: { model: 'openai/gpt-5.2', temperature: 0.1, response_format: { type: 'json_object' }, messages: [{ role: 'system', content: system }, { role: 'user', content: user }] } } }];"
+        "jsCode": "const body = $('Webhook: Telegram feedback').item.json.body || {};\nconst msg = body.message?.text || body.text || body.message || JSON.stringify(body);\nconst pkg = Array.isArray($input.first()?.json) ? $input.first().json[0] : $input.first()?.json;\nconst system = [\n  'You parse short natural Russian Telegram commands for a content factory owner.',\n  'Understand profanity, typos, mixed Russian/English, and casual phrases.',\n  'Supported intents: published, revise, approve, reject, archive, ask_status, resend_links. Use revise when the user asks to fix background, text, hook, music, cheap look, wrong vibe, bad video, or says to redo.',\n  'Extract target assets if mentioned: reel_1, reel_2, reel_3, story, all, or unknown. If target is unclear for revise, use all and explain the requested change in change_request.',\n  'If user says the post was published, intent=published. If they complain about background/text/cheap look/hook/music/video, intent=revise.',\n  'If confidence is low, use ask_status and explain briefly.',\n  'Return only valid JSON.'\n].join(' ');\nconst schema = {\n  intent: 'published|revise|approve|reject|archive|ask_status|resend_links',\n  target_assets: [],\n  change_request: '',\n  feedback_tags: [],\n  confidence: 0,\n  should_create_published_posts: false,\n  needs_clarification: false,\n  short_reply: ''\n};\nconst user = [\n  'Latest package context:',\n  JSON.stringify({daily_package_id: pkg?.id || null, status: pkg?.status || null, package_date: pkg?.package_date || null}),\n  'Message:',\n  msg,\n  'Return JSON matching schema:',\n  JSON.stringify(schema)\n].join('\\n');\nreturn [{ json: { daily_package_id: pkg?.id || null, raw_message: msg, polza_body: { model: 'openai/gpt-5.2', temperature: 0.1, response_format: { type: 'json_object' }, messages: [{ role: 'system', content: system }, { role: 'user', content: user }] } } }];"
       }
     },
     {
@@ -82,7 +86,7 @@
           "parameters": [
             {
               "name": "Authorization",
-              "value": "Bearer <POLZA_API_KEY>"
+              "value": "Bearer POLZA_API_KEY"
             },
             {
               "name": "Content-Type",
@@ -94,7 +98,10 @@
         "contentType": "raw",
         "rawContentType": "application/json",
         "body": "={{ JSON.stringify($json.polza_body) }}"
-      }
+      },
+      "retryOnFail": true,
+      "maxTries": 2,
+      "waitBetweenTries": 10000
     },
     {
       "id": "parse-llm-055",
@@ -107,7 +114,7 @@
       ],
       "parameters": {
         "mode": "runOnceForAllItems",
-        "jsCode": "const source = $('Code: build feedback LLM prompt').first().json;\nconst response = $input.first()?.json || {};\nconst raw = response.choices?.[0]?.message?.content || response.message?.content || response.content || '';\nfunction parseJson(text) {\n  const clean = String(text || '').trim().replace(/^\\`\\`\\`json\\s*/i, '').replace(/^\\`\\`\\`\\s*/i, '').replace(/\\`\\`\\`$/i, '').trim();\n  try { return JSON.parse(clean); } catch (e) {}\n  const start = clean.indexOf('{'); const end = clean.lastIndexOf('}');\n  if (start >= 0 && end > start) return JSON.parse(clean.slice(start, end + 1));\n  throw new Error('No JSON');\n}\nfunction localFallback(msg) {\n  const s = String(msg || '').toLowerCase();\n  let intent = 'ask_status';\n  if (s.includes('РѕРїСѓР±Р»РёРєРѕРІ') || s.includes('published') || s.includes('РІС‹Р»РѕР¶РёР»') || s.includes('Р·Р°Р»РёР»')) intent = 'published';\n  else if (s.includes('РёСЃРїСЂР°РІ') || s.includes('РїР»РѕС…Рѕ') || s.includes('Р·Р°РјРµРЅРё') || s.includes('РїРµСЂРµРґРµР»') || s.includes('С„РѕРЅ')) intent = 'revise';\n  else if (s.includes('РѕРґРѕР±СЂ') || s === 'РѕРє' || s.includes('approve') || s.includes('РІСЃРµ РѕРє') || s.includes('РІСЃС‘ РѕРє')) intent = 'approve';\n  else if (s.includes('СЃСЃС‹Р»Рє') || s.includes('РµС‰Рµ СЂР°Р·') || s.includes('РµС‰С‘ СЂР°Р·')) intent = 'resend_links';\n  return { intent, target_assets: [], change_request: intent === 'revise' ? msg : '', feedback_tags: [intent], confidence: 0.65, needs_clarification: false, short_reply: '' };\n}\nlet parsed;\ntry { parsed = parseJson(raw); } catch (e) { parsed = localFallback(source.raw_message); }\nconst intent = parsed.intent || parsed.parsed_intent || 'ask_status';\nconst tags = Array.isArray(parsed.feedback_tags) ? parsed.feedback_tags : [intent];\nconst targets = Array.isArray(parsed.target_assets) ? parsed.target_assets : [];\nif (targets.length) tags.push('targets:' + targets.join(','));\nif (parsed.needs_clarification) tags.push('needs_clarification');\nif (parsed.short_reply) tags.push('reply:' + String(parsed.short_reply).slice(0, 300));\nreturn [{\n  json: {\n    daily_package_id: source.daily_package_id,\n    raw_message: source.raw_message,\n    parsed_intent: intent,\n    target_asset_type: targets[0] || null,\n    target_index: null,\n    change_request: parsed.change_request || (intent === 'revise' ? source.raw_message : null),\n    feedback_tags_json: tags,\n    parser_model: raw ? 'openai/gpt-5.2' : 'local-fallback',\n    parser_confidence: Math.max(0, Math.min(1, Number(parsed.confidence || 0.7))),\n    used_for_learning: false\n  }\n}];"
+        "jsCode": "const source = $('Code: build feedback LLM prompt').first().json;\nconst response = $input.first()?.json || {};\nconst raw = response.choices?.[0]?.message?.content || response.message?.content || response.content || '';\nfunction parseJson(text) {\n  const clean = String(text || '').trim().replace(/^\\`\\`\\`json\\s*/i, '').replace(/^\\`\\`\\`\\s*/i, '').replace(/\\`\\`\\`$/i, '').trim();\n  try { return JSON.parse(clean); } catch (e) {}\n  const start = clean.indexOf('{'); const end = clean.lastIndexOf('}');\n  if (start >= 0 && end > start) return JSON.parse(clean.slice(start, end + 1));\n  throw new Error('No JSON');\n}\nfunction localFallback(msg) {\n  const s = String(msg || '').toLowerCase();\n  let intent = 'ask_status';\n  if (s.includes('опубликов') || s.includes('published') || s.includes('выложил') || s.includes('залил')) intent = 'published';\n  else if (s.includes('исправ') || s.includes('плохо') || s.includes('замени') || s.includes('передел') || s.includes('фон')) intent = 'revise';\n  else if (s.includes('одобр') || s === 'ок' || s.includes('approve') || s.includes('все ок') || s.includes('всё ок')) intent = 'approve';\n  else if (s.includes('ссылк') || s.includes('еще раз') || s.includes('ещё раз')) intent = 'resend_links';\n  return { intent, target_assets: [], change_request: intent === 'revise' ? msg : '', feedback_tags: [intent], confidence: 0.65, needs_clarification: false, short_reply: '' };\n}\nlet parsed;\ntry { parsed = parseJson(raw); } catch (e) { parsed = localFallback(source.raw_message); }\nconst intent = parsed.intent || parsed.parsed_intent || 'ask_status';\nconst tags = Array.isArray(parsed.feedback_tags) ? parsed.feedback_tags : [intent];\nconst targets = Array.isArray(parsed.target_assets) ? parsed.target_assets : [];\nif (targets.length) tags.push('targets:' + targets.join(','));\nif (parsed.needs_clarification) tags.push('needs_clarification');\nif (parsed.short_reply) tags.push('reply:' + String(parsed.short_reply).slice(0, 300));\nreturn [{\n  json: {\n    daily_package_id: source.daily_package_id,\n    raw_message: source.raw_message,\n    parsed_intent: intent,\n    target_asset_type: targets[0] || null,\n    target_index: null,\n    change_request: parsed.change_request || (intent === 'revise' ? source.raw_message : null),\n    feedback_tags_json: tags,\n    parser_model: raw ? 'openai/gpt-5.2' : 'local-fallback',\n    parser_confidence: Math.max(0, Math.min(1, Number(parsed.confidence || 0.7))),\n    used_for_learning: false\n  }\n}];"
       }
     },
     {
@@ -127,11 +134,11 @@
           "parameters": [
             {
               "name": "apikey",
-              "value": "<SUPABASE_SERVICE_ROLE_KEY>"
+              "value": "SUPABASE_SECRET_KEY"
             },
             {
               "name": "Authorization",
-              "value": "Bearer <SUPABASE_SERVICE_ROLE_KEY>"
+              "value": "Bearer SUPABASE_SECRET_KEY"
             },
             {
               "name": "Content-Type",
@@ -147,7 +154,10 @@
         "contentType": "raw",
         "rawContentType": "application/json",
         "body": "={{ JSON.stringify($json) }}"
-      }
+      },
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 5000
     },
     {
       "id": "pub-055",
@@ -160,7 +170,7 @@
       ],
       "parameters": {
         "mode": "runOnceForAllItems",
-        "jsCode": "const f=Array.isArray($input.first().json)?$input.first().json[0]:$input.first().json;return[{json:{feedback:f,is_published:f.parsed_intent==='published'}}];"
+        "jsCode": "const f = Array.isArray($input.first().json) ? $input.first().json[0] : $input.first().json;\nconst intent = f.parsed_intent || 'ask_status';\nreturn [{\n  json: {\n    feedback: f,\n    intent,\n    is_published: intent === 'published',\n    is_revision: intent === 'revise',\n    is_approved: intent === 'approve'\n  }\n}];"
       }
     },
     {
@@ -212,11 +222,11 @@
           "parameters": [
             {
               "name": "apikey",
-              "value": "<SUPABASE_SERVICE_ROLE_KEY>"
+              "value": "SUPABASE_SECRET_KEY"
             },
             {
               "name": "Authorization",
-              "value": "Bearer <SUPABASE_SERVICE_ROLE_KEY>"
+              "value": "Bearer SUPABASE_SECRET_KEY"
             },
             {
               "name": "Content-Type",
@@ -232,7 +242,10 @@
         "contentType": "raw",
         "rawContentType": "application/json",
         "body": "={{ JSON.stringify({status:'published',updated_at:new Date().toISOString()}) }}"
-      }
+      },
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 5000
     },
     {
       "id": "donefb-055",
@@ -245,7 +258,7 @@
       ],
       "parameters": {
         "mode": "runOnceForAllItems",
-        "jsCode": "return[{json:{action:'feedback_saved',message:'Feedback saved.'}}];"
+        "jsCode": "return [{ json: { action: 'feedback_saved', message: 'Feedback saved.' } }];"
       }
     },
     {
@@ -265,11 +278,11 @@
           "parameters": [
             {
               "name": "apikey",
-              "value": "<SUPABASE_SERVICE_ROLE_KEY>"
+              "value": "SUPABASE_SECRET_KEY"
             },
             {
               "name": "Authorization",
-              "value": "Bearer <SUPABASE_SERVICE_ROLE_KEY>"
+              "value": "Bearer SUPABASE_SECRET_KEY"
             },
             {
               "name": "Content-Type",
@@ -277,7 +290,10 @@
             }
           ]
         }
-      }
+      },
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 5000
     },
     {
       "id": "buildposts-055",
@@ -310,11 +326,11 @@
           "parameters": [
             {
               "name": "apikey",
-              "value": "<SUPABASE_SERVICE_ROLE_KEY>"
+              "value": "SUPABASE_SECRET_KEY"
             },
             {
               "name": "Authorization",
-              "value": "Bearer <SUPABASE_SERVICE_ROLE_KEY>"
+              "value": "Bearer SUPABASE_SECRET_KEY"
             },
             {
               "name": "Content-Type",
@@ -330,7 +346,10 @@
         "contentType": "raw",
         "rawContentType": "application/json",
         "body": "={{ JSON.stringify($json.rows) }}"
-      }
+      },
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 5000
     },
     {
       "id": "donepub2-055",
@@ -344,6 +363,136 @@
       "parameters": {
         "mode": "runOnceForAllItems",
         "jsCode": "const rows = Array.isArray($input.first()?.json) ? $input.first().json : [];\nreturn [{ json: { action: 'feedback_saved', published_posts_created: rows.length, message: 'Feedback saved; package marked published and published_posts created.' } }];"
+      }
+    },
+    {
+      "id": "ifrev-055",
+      "name": "IF: revision requested?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        1700,
+        360
+      ],
+      "parameters": {
+        "conditions": {
+          "combinator": "and",
+          "options": {
+            "version": 2,
+            "leftValue": "",
+            "caseSensitive": true,
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "id": "revision",
+              "leftValue": "={{ $json.is_revision }}",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "patchrevpkg-055",
+      "name": "Supabase: mark package needs revision",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        1980,
+        300
+      ],
+      "parameters": {
+        "url": "={{ 'https://xxnzqridvepixzireqjh.supabase.co/rest/v1/daily_packages?id=eq.' + $json.feedback.daily_package_id }}",
+        "method": "PATCH",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "apikey",
+              "value": "SUPABASE_SECRET_KEY"
+            },
+            {
+              "name": "Authorization",
+              "value": "Bearer SUPABASE_SECRET_KEY"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            },
+            {
+              "name": "Prefer",
+              "value": "return=representation"
+            }
+          ]
+        },
+        "sendBody": true,
+        "contentType": "raw",
+        "rawContentType": "application/json",
+        "body": "={{ JSON.stringify({status:'needs_revision',updated_at:new Date().toISOString()}) }}"
+      },
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 5000
+    },
+    {
+      "id": "patchrevassets-055",
+      "name": "Supabase: reset package assets for revision",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        2260,
+        300
+      ],
+      "parameters": {
+        "url": "={{ 'https://xxnzqridvepixzireqjh.supabase.co/rest/v1/package_assets?daily_package_id=eq.' + $('Code: build publish update').item.json.feedback.daily_package_id + '&asset_type=in.(reel_close,reel_premium,reel_viral,story)' }}",
+        "method": "PATCH",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "apikey",
+              "value": "SUPABASE_SECRET_KEY"
+            },
+            {
+              "name": "Authorization",
+              "value": "Bearer SUPABASE_SECRET_KEY"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            },
+            {
+              "name": "Prefer",
+              "value": "return=representation"
+            }
+          ]
+        },
+        "sendBody": true,
+        "contentType": "raw",
+        "rawContentType": "application/json",
+        "body": "={{ JSON.stringify({qc_status:'pending',qc_notes:'Revision requested from Telegram: ' + ($('Code: build publish update').item.json.feedback.change_request || $('Code: build publish update').item.json.feedback.raw_message || ''),updated_at:new Date().toISOString()}) }}"
+      },
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 5000
+    },
+    {
+      "id": "donerev-055",
+      "name": "Code: revision queued result",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2540,
+        300
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "const feedback = $('Code: build publish update').item.json.feedback;\nreturn [{ json: { action: 'revision_queued', daily_package_id: feedback.daily_package_id, message: 'Feedback saved; package marked needs_revision and assets reset for rerender.' } }];"
       }
     }
   ],
@@ -436,7 +585,7 @@
         ],
         [
           {
-            "node": "Code: feedback saved",
+            "node": "IF: revision requested?",
             "type": "main",
             "index": 0
           }
@@ -486,6 +635,46 @@
           }
         ]
       ]
+    },
+    "IF: revision requested?": {
+      "main": [
+        [
+          {
+            "node": "Supabase: mark package needs revision",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Code: feedback saved",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Supabase: mark package needs revision": {
+      "main": [
+        [
+          {
+            "node": "Supabase: reset package assets for revision",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Supabase: reset package assets for revision": {
+      "main": [
+        [
+          {
+            "node": "Code: revision queued result",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     }
   },
   "settings": {
@@ -493,5 +682,5 @@
     "callerPolicy": "workflowsFromSameOwner",
     "availableInMCP": false
   },
-  "exportedAt": "2026-05-13T18:05:09.558Z"
+  "staticData": null
 }

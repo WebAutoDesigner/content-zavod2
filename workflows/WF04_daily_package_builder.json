@@ -37,7 +37,8 @@
         "httpMethod": "POST",
         "responseMode": "lastNode"
       },
-      "webhookId": "32e21ca1-3077-4b9a-bae0-add6f6226f50"
+      "webhookId": "32e21ca1-3077-4b9a-bae0-add6f6226f50",
+      "onError": "continueRegularOutput"
     },
     {
       "id": "readq-04",
@@ -56,11 +57,11 @@
           "parameters": [
             {
               "name": "apikey",
-              "value": "<SUPABASE_SERVICE_ROLE_KEY>"
+              "value": "SUPABASE_SECRET_KEY"
             },
             {
               "name": "Authorization",
-              "value": "Bearer <SUPABASE_SERVICE_ROLE_KEY>"
+              "value": "Bearer SUPABASE_SECRET_KEY"
             },
             {
               "name": "Content-Type",
@@ -69,7 +70,10 @@
           ]
         }
       },
-      "alwaysOutputData": true
+      "alwaysOutputData": true,
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 5000
     },
     {
       "id": "build-04",
@@ -82,7 +86,7 @@
       ],
       "parameters": {
         "mode": "runOnceForAllItems",
-        "jsCode": "const rows = $input.all().flatMap(i => Array.isArray(i.json) ? i.json : [i.json]).filter(r => r && r.id);\nconst pick = g => rows.filter(r => r.queue_group === g)[0];\nconst close = pick('close');\nconst premium = pick('premium');\nconst viral = pick('viral');\nconst story = pick('story');\nif (!close || !premium || !viral || !story) {\n  return [{ json: { ok: false, action: 'skip', message: 'Not enough queued items for daily package.' } }];\n}\nconst today = new Date().toISOString().slice(0, 10);\nconst q = [close, premium, viral, story];\nconst cta = [close, premium, viral].map(x => x.content_variants?.cta).filter(Boolean)[0] || '???пїЅ?????????,?пїЅ ?? ???????пїЅ???,, ???,???пїЅ?< ???пїЅ???пїЅ?,?? ???пїЅ???? ?? ??????????.';\nconst pkg = {\n  package_date: today,\n  status: 'in_production',\n  reel_close_queue_id: close.id,\n  reel_premium_queue_id: premium.id,\n  reel_viral_queue_id: viral.id,\n  story_queue_id: story.id,\n  cta,\n  selection_notes: 'Auto package: close + premium + viral + story. Assets are render specs until WF04 render implementation fills final files.',\n  score_breakdown_json: Object.fromEntries(q.map(x => [x.queue_group, { priority: x.priority_score, virality: x.virality_score, premium: x.premium_score, similarity: x.similarity_score }])),\n  source_refs_json: q.map(x => ({ queue_id: x.id, variant_id: x.content_variant_id, pattern_id: x.content_variants?.content_pattern_id }))\n};\nreturn [{ json: { ok: true, pkg, queue_ids: q.map(x => x.id), items: { close, premium, viral, story } } }];"
+        "jsCode": "const rows = $input.all().flatMap(i => Array.isArray(i.json) ? i.json : [i.json]).filter(r => r && r.id);\nconst pick = g => rows.filter(r => r.queue_group === g)[0];\nconst close = pick('close');\nconst premium = pick('premium');\nconst viral = pick('viral');\nconst story = pick('story');\nif (!close || !premium || !viral || !story) {\n  return [{ json: { ok: false, action: 'skip', message: 'Not enough queued items for daily package.' } }];\n}\nconst today = new Date().toISOString().slice(0, 10);\nconst q = [close, premium, viral, story];\nconst cta = [close, premium, viral].map(x => x.content_variants?.cta).filter(Boolean)[0] || 'Напишите в директ, чтобы узнать наличие и цену.';\nconst pkg = {\n  package_date: today,\n  status: 'in_production',\n  reel_close_queue_id: close.id,\n  reel_premium_queue_id: premium.id,\n  reel_viral_queue_id: viral.id,\n  story_queue_id: story.id,\n  cta,\n  selection_notes: 'Auto package: close + premium + viral + story. WF04 creates render specs; WF04.5 renders final files.',\n  score_breakdown_json: Object.fromEntries(q.map(x => [x.queue_group, { priority: x.priority_score, virality: x.virality_score, premium: x.premium_score, similarity: x.similarity_score }])),\n  source_refs_json: q.map(x => ({ queue_id: x.id, variant_id: x.content_variant_id, pattern_id: x.content_variants?.content_pattern_id }))\n};\nreturn [{ json: { ok: true, pkg, queue_ids: q.map(x => x.id), items: { close, premium, viral, story } } }];"
       }
     },
     {
@@ -98,10 +102,10 @@
         "conditions": {
           "combinator": "and",
           "options": {
-            "caseSensitive": true,
+            "version": 2,
             "leftValue": "",
-            "typeValidation": "strict",
-            "version": 2
+            "caseSensitive": true,
+            "typeValidation": "strict"
           },
           "conditions": [
             {
@@ -115,7 +119,8 @@
             }
           ]
         }
-      }
+      },
+      "onError": "continueErrorOutput"
     },
     {
       "id": "insertpkg-04",
@@ -134,11 +139,11 @@
           "parameters": [
             {
               "name": "apikey",
-              "value": "<SUPABASE_SERVICE_ROLE_KEY>"
+              "value": "SUPABASE_SECRET_KEY"
             },
             {
               "name": "Authorization",
-              "value": "Bearer <SUPABASE_SERVICE_ROLE_KEY>"
+              "value": "Bearer SUPABASE_SECRET_KEY"
             },
             {
               "name": "Content-Type",
@@ -154,7 +159,10 @@
         "contentType": "raw",
         "rawContentType": "application/json",
         "body": "={{ JSON.stringify($json.pkg) }}"
-      }
+      },
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 5000
     },
     {
       "id": "assets-04",
@@ -167,7 +175,7 @@
       ],
       "parameters": {
         "mode": "runOnceForAllItems",
-        "jsCode": "const pkg=Array.isArray($input.first().json)?$input.first().json[0]:$input.first().json;const src=$('Code: build package rows').item.json;const map={close:'reel_close',premium:'reel_premium',viral:'reel_viral',story:'story'};const now=new Date().toISOString();const rows=Object.entries(src.items).map(([g,q])=>({daily_package_id:pkg.id,content_queue_id:q.id,asset_type:map[g],file_path:'/content-factory/packages/'+pkg.package_date+'/'+map[g]+'.mp4',storage_url:null,thumbnail_url:null,duration_seconds:null,resolution:'1080x1920',production_mode:q.production_mode,render_tool:q.production_mode==='ai_video'?'polza_sora_2':(q.production_mode==='story_template'?'playwright':'hybrid'),ai_video_model:q.production_mode==='ai_video'?'openai/sora-2':null,image_model:'openai/gpt-image-1.5',music_source:'competitor_pattern_or_library',caption:q.content_variants?.caption||'',cta:q.content_variants?.cta||src.pkg.cta,qc_status:'pending',qc_notes:'Production spec created; render endpoint/media generation must fill final file.',created_at:now,updated_at:now}));rows.push({daily_package_id:pkg.id,asset_type:'metadata',file_path:'/content-factory/packages/'+pkg.package_date+'/metadata.json',caption:JSON.stringify(src.pkg),cta:src.pkg.cta,qc_status:'pending',created_at:now,updated_at:now});return[{json:{pkg,queue_ids:src.queue_ids,assets:rows}}];"
+        "jsCode": "const pkg = Array.isArray($input.first().json) ? $input.first().json[0] : $input.first().json;\nconst src = $items('Code: build package rows')[0].json;\nconst map = { close: 'reel_close', premium: 'reel_premium', viral: 'reel_viral', story: 'story' };\nconst now = new Date().toISOString();\nconst rows = Object.entries(src.items).map(([g, q]) => ({\n  daily_package_id: pkg.id,\n  content_queue_id: q.id,\n  asset_type: map[g],\n  file_path: '/content-factory/packages/' + pkg.package_date + '/' + map[g] + '.mp4',\n  storage_url: null,\n  thumbnail_url: null,\n  duration_seconds: null,\n  resolution: '1080x1920',\n  production_mode: q.production_mode,\n  render_tool: q.production_mode === 'ai_video' ? 'polza_sora_2' : (q.production_mode === 'story_template' ? 'playwright' : 'hybrid'),\n  ai_video_model: q.production_mode === 'ai_video' ? 'openai/sora-2' : null,\n  image_model: 'openai/gpt-image-1.5',\n  music_source: 'competitor_pattern_or_library',\n  caption: q.content_variants?.caption || '',\n  cta: q.content_variants?.cta || src.pkg.cta,\n  qc_status: 'pending',\n  qc_notes: 'Production spec created; WF04.5 must render/fill final file.',\n  created_at: now,\n  updated_at: now\n}));\nrows.push({\n  daily_package_id: pkg.id,\n  asset_type: 'metadata',\n  file_path: '/content-factory/packages/' + pkg.package_date + '/metadata.json',\n  caption: JSON.stringify(src.pkg),\n  cta: src.pkg.cta,\n  qc_status: 'pending',\n  created_at: now,\n  updated_at: now\n});\nreturn [{ json: { pkg, queue_ids: src.queue_ids, assets: rows } }];"
       }
     },
     {
@@ -187,11 +195,11 @@
           "parameters": [
             {
               "name": "apikey",
-              "value": "<SUPABASE_SERVICE_ROLE_KEY>"
+              "value": "SUPABASE_SECRET_KEY"
             },
             {
               "name": "Authorization",
-              "value": "Bearer <SUPABASE_SERVICE_ROLE_KEY>"
+              "value": "Bearer SUPABASE_SECRET_KEY"
             },
             {
               "name": "Content-Type",
@@ -207,7 +215,10 @@
         "contentType": "raw",
         "rawContentType": "application/json",
         "body": "={{ JSON.stringify($json.assets) }}"
-      }
+      },
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 5000
     },
     {
       "id": "patchpkg-04",
@@ -226,11 +237,11 @@
           "parameters": [
             {
               "name": "apikey",
-              "value": "<SUPABASE_SERVICE_ROLE_KEY>"
+              "value": "SUPABASE_SECRET_KEY"
             },
             {
               "name": "Authorization",
-              "value": "Bearer <SUPABASE_SERVICE_ROLE_KEY>"
+              "value": "Bearer SUPABASE_SECRET_KEY"
             },
             {
               "name": "Content-Type",
@@ -246,7 +257,10 @@
         "contentType": "raw",
         "rawContentType": "application/json",
         "body": "={{ JSON.stringify({status:'in_production',updated_at:new Date().toISOString()}) }}"
-      }
+      },
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 5000
     },
     {
       "id": "patchq-04",
@@ -265,11 +279,11 @@
           "parameters": [
             {
               "name": "apikey",
-              "value": "<SUPABASE_SERVICE_ROLE_KEY>"
+              "value": "SUPABASE_SECRET_KEY"
             },
             {
               "name": "Authorization",
-              "value": "Bearer <SUPABASE_SERVICE_ROLE_KEY>"
+              "value": "Bearer SUPABASE_SECRET_KEY"
             },
             {
               "name": "Content-Type",
@@ -285,7 +299,10 @@
         "contentType": "raw",
         "rawContentType": "application/json",
         "body": "={{ JSON.stringify({status:'produced',produced_at:new Date().toISOString(),updated_at:new Date().toISOString()}) }}"
-      }
+      },
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 5000
     },
     {
       "id": "done-04",
@@ -298,7 +315,7 @@
       ],
       "parameters": {
         "mode": "runOnceForAllItems",
-        "jsCode": "return[{json:{action:'package_ready',message:'WF04 created daily package and package_assets.'}}];"
+        "jsCode": "const result = {\n  action: 'package_ready',\n  message: 'WF04 created daily package and package_assets.'\n};\nreturn [{ json: result }];"
       }
     },
     {
@@ -312,7 +329,7 @@
       ],
       "parameters": {
         "mode": "runOnceForAllItems",
-        "jsCode": "return[{json:{action:'skip',message:'Not enough queued items: need close, premium, viral, story.'}}];"
+        "jsCode": "const result = {\n  action: 'skip',\n  message: 'Not enough queued items: need close, premium, viral, story.'\n};\nreturn [{ json: result }];"
       }
     }
   ],
@@ -440,6 +457,9 @@
     "callerPolicy": "workflowsFromSameOwner",
     "availableInMCP": false
   },
-  "versionId": "c1e0e4b3-13e3-4366-9556-36484d1b8ef5",
-  "exportedAt": "2026-05-13T17:34:40.374Z"
+  "staticData": {
+    "node:Schedule: build daily package": {
+      "recurrenceRules": []
+    }
+  }
 }
