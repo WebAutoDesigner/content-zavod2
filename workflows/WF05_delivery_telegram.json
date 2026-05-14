@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-05-14T10:45:10.667Z",
+  "updatedAt": "2026-05-14T10:58:52.278Z",
   "createdAt": "2026-05-13T14:18:48.324Z",
   "id": "NQRIRMhgVQb8OxV2",
   "name": "05 | Delivery Telegram",
@@ -210,7 +210,7 @@
         "sendBody": true,
         "contentType": "raw",
         "rawContentType": "application/json",
-        "body": "={{ JSON.stringify({status:'delivered',delivered_at:new Date().toISOString(),updated_at:new Date().toISOString()}) }}"
+        "body": "={{ JSON.stringify({status:'delivered',updated_at:new Date().toISOString()}) }}"
       },
       "retryOnFail": true,
       "maxTries": 3,
@@ -423,9 +423,9 @@
   },
   "meta": null,
   "pinData": null,
-  "versionId": "a6ef643b-04ab-4b87-9bee-9d61092f2379",
-  "activeVersionId": "a6ef643b-04ab-4b87-9bee-9d61092f2379",
-  "versionCounter": 23,
+  "versionId": "b039b491-8359-4d35-8cd8-6246c2e0e78e",
+  "activeVersionId": "b039b491-8359-4d35-8cd8-6246c2e0e78e",
+  "versionCounter": 28,
   "triggerCount": 2,
   "shared": [
     {
@@ -448,9 +448,9 @@
   ],
   "tags": [],
   "activeVersion": {
-    "updatedAt": "2026-05-14T10:45:10.668Z",
-    "createdAt": "2026-05-14T10:45:10.668Z",
-    "versionId": "a6ef643b-04ab-4b87-9bee-9d61092f2379",
+    "updatedAt": "2026-05-14T10:58:52.278Z",
+    "createdAt": "2026-05-14T10:58:52.278Z",
+    "versionId": "b039b491-8359-4d35-8cd8-6246c2e0e78e",
     "workflowId": "NQRIRMhgVQb8OxV2",
     "nodes": [
       {
@@ -656,7 +656,7 @@
           "sendBody": true,
           "contentType": "raw",
           "rawContentType": "application/json",
-          "body": "={{ JSON.stringify({status:'delivered',delivered_at:new Date().toISOString(),updated_at:new Date().toISOString()}) }}"
+          "body": "={{ JSON.stringify({status:'delivered',updated_at:new Date().toISOString()}) }}"
         },
         "retryOnFail": true,
         "maxTries": 3,
@@ -863,18 +863,18 @@
     "autosaved": false,
     "workflowPublishHistory": [
       {
-        "createdAt": "2026-05-14T10:45:10.745Z",
-        "id": 165,
+        "createdAt": "2026-05-14T10:58:52.357Z",
+        "id": 167,
         "workflowId": "NQRIRMhgVQb8OxV2",
-        "versionId": "a6ef643b-04ab-4b87-9bee-9d61092f2379",
+        "versionId": "b039b491-8359-4d35-8cd8-6246c2e0e78e",
         "event": "activated",
         "userId": "92e19e2b-362b-418d-8b48-7dcd70395297"
       },
       {
-        "createdAt": "2026-05-14T10:45:10.716Z",
-        "id": 164,
+        "createdAt": "2026-05-14T10:58:52.327Z",
+        "id": 166,
         "workflowId": "NQRIRMhgVQb8OxV2",
-        "versionId": "a6ef643b-04ab-4b87-9bee-9d61092f2379",
+        "versionId": "b039b491-8359-4d35-8cd8-6246c2e0e78e",
         "event": "deactivated",
         "userId": "92e19e2b-362b-418d-8b48-7dcd70395297"
       }
